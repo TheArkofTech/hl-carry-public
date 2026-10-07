@@ -27,7 +27,14 @@ for (const [coin, st] of Object.entries(legs)) {
   }
 }
 
-const target = process.argv[2] || Object.keys(days).sort().pop();
+// Publish the most recently COMPLETED UTC day (T+1): at rollover the new day
+// has only 1-2 samples — a digest of it would be a junk fragment, and the
+// completed day would never get its final numbers into the track record.
+// Explicit argv (e.g. a partial-day snapshot) still wins.
+const today = new Date().toISOString().slice(0, 10);
+const dayKeys = Object.keys(days).sort();
+const priorDays = dayKeys.filter(d => d < today);
+const target = process.argv[2] || (priorDays.length ? priorDays[priorDays.length - 1] : dayKeys[dayKeys.length - 1]);
 const data = days[target];
 if (!data) { console.error(`no samples for ${target}`); process.exit(1); }
 
