@@ -38,10 +38,22 @@ lines.push(`Generated ${new Date().toISOString()} from ${Object.values(data).red
 lines.push('');
 lines.push('## Measured funding (UTC day, annualized)');
 lines.push('');
+// Operative verdict = trailing-24h ending at the state's last sample (the x409 entry
+// gate), NOT the calendar-day average — a partial day can read DEPLOY while the gate
+// says HOLD (HYPE 2026-10-07: day +5.8% vs trailing +4.0%). Reproducible from state.
+const trailingAnn = (coin) => {
+  const h = legs[coin]?.hist || [];
+  if (!h.length) return null;
+  const lastT = h[h.length - 1].t;
+  const w = h.filter(s => lastT - s.t < 86400000);
+  return w.length >= 3 ? (w.reduce((a, b) => a + b.r, 0) / w.length) * 24 * 365 * 100 : null;
+};
+
 for (const [coin, rates] of Object.entries(data)) {
   const avg = rates.reduce((a, b) => a + b, 0) / rates.length;
   const ann = avg * 24 * 365 * 100;
-  const tag = DEPLOY[coin] ? (ann >= 5 ? 'DEPLOY' : ann < 0 ? 'UNWIND-ZONE' : 'HOLD') : 'watch';
+  const v = DEPLOY[coin] ? (trailingAnn(coin) ?? ann) : ann;
+  const tag = DEPLOY[coin] ? (v >= 5 ? 'DEPLOY' : v < 0 ? 'UNWIND-ZONE' : 'HOLD') : 'watch';
   const variance = Math.max(...rates) === Math.min(...rates) ? 'steady' : 'variable';
   lines.push(`- **${coin}** — ${ann >= 0 ? '+' : ''}${ann.toFixed(1)}%/yr pace from ${rates.length} samples (${variance}) · 180d avg ${H180[coin] ?? '?'}%/yr · **${tag}**`);
 }
@@ -52,7 +64,14 @@ if (purr !== null) {
   lines.push('## Deploy status');
   lines.push('');
   lines.push(`- PURR carry: ${purr >= 0 ? '+' : ''}${(purr * 24 * 365 * 100).toFixed(1)}%/yr pace${basis ? `, spot/perp basis ${((basis - 1) * 100).toFixed(2)}% (within 1% gate)` : ''}`);
-  lines.push(`- HYPE: funding negative — leg disabled until flip (watchdog alerts automatically).`);
+  const hype = data.HYPE?.length ? data.HYPE.reduce((a, b) => a + b, 0) / data.HYPE.length : null;
+  if (hype !== null) {
+    const hAnn = hype * 24 * 365 * 100;
+    const hBasis = legs.HYPE?.lastBasis;
+    const tAnn = trailingAnn('HYPE');
+    const gate = tAnn === null ? 'insufficient trailing samples' : tAnn < 5 ? `trailing-24h ${tAnn >= 0 ? '+' : ''}${tAnn.toFixed(1)}%/yr below 5% hurdle — leg stays disabled` : `trailing-24h ${tAnn >= 0 ? '+' : ''}${tAnn.toFixed(1)}%/yr clears hurdle — size entry per carry-exec rules`;
+    lines.push(`- HYPE: ${hAnn >= 0 ? '+' : ''}${hAnn.toFixed(1)}%/yr day pace from ${data.HYPE.length} samples${hBasis ? `, basis ${((hBasis - 1) * 100).toFixed(2)}%` : ''} — ${gate} (entry gate is trailing-24h, never a single sample).`);
+  }
   lines.push('');
 }
 lines.push('---');

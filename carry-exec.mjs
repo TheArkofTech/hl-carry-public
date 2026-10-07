@@ -3,7 +3,7 @@
  * Strategy (validated Oct 4 2026, skill: crypto-strategy-oos-testing):
  *   Spot-buy base + short equal perp notional → collect positive funding, market-neutral.
  *   Deploy legs: PURR (spot PURR/USDC, canonical), HYPE (spot @107, non-canonical).
- *   HYPE currently NEGATIVE funding — blocked until flip (carry-monitor alerts).
+ *   HYPE flipped positive Oct 7 but WEAK trailing-24h — stays disabled until trailing-24h DEPLOY (x409-loop doctrine).
  *
  * MODES:
  *   DRY-RUN (default): no key in env → computes exact orders (size, price, cost) and logs them.
@@ -21,7 +21,7 @@ const DRY = !process.env.CARRY_LIVE || process.env.CARRY_LIVE !== '1';
 // --- config ---
 const LEGS = {
   PURR: { spot: 'PURR/USDC', perp: 'PURR', enabled: true },
-  HYPE: { spot: '@107',      perp: 'HYPE', enabled: false }, // blocked: funding negative as of Oct 6
+  HYPE: { spot: '@107',      perp: 'HYPE', enabled: false }, // Oct 7: flipped positive but WEAK +4.0%/yr trailing-24h — enable only on trailing-24h >=5%/yr + basis <1%
 };
 const ALLOC_USDC = parseFloat(process.env.CARRY_ALLOC || '0'); // deploy capital per run
 const MAX_BASIS = 0.01;   // refuse entry if spot/perp mid ratio deviates >1%
