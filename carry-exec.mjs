@@ -3,7 +3,9 @@
  * Strategy (validated Oct 4 2026, skill: crypto-strategy-oos-testing):
  *   Spot-buy base + short equal perp notional → collect positive funding, market-neutral.
  *   Deploy legs: PURR (spot PURR/USDC, canonical), HYPE (spot @107, non-canonical).
- *   HYPE flipped positive Oct 7 but WEAK trailing-24h — stays disabled until trailing-24h DEPLOY (x409-loop doctrine).
+ *   HYPE flipped WEAK→DEPLOY Oct 8 02:31Z (trailing-24h +5.6%/yr, 3 consecutive
+ *   positive samples, basis +0.03%) — enabled, armed pending capital. Fragile:
+ *   one negative sample reverts the trailing gate to WEAK.
  *
  * MODES:
  *   DRY-RUN (default): no key in env → computes exact orders (size, price, cost) and logs them.
@@ -21,7 +23,7 @@ const DRY = !process.env.CARRY_LIVE || process.env.CARRY_LIVE !== '1';
 // --- config ---
 const LEGS = {
   PURR: { spot: 'PURR/USDC', perp: 'PURR', enabled: true },
-  HYPE: { spot: '@107',      perp: 'HYPE', enabled: false }, // Oct 7: flipped positive but WEAK +4.0%/yr trailing-24h — enable only on trailing-24h >=5%/yr + basis <1%
+  HYPE: { spot: '@107',      perp: 'HYPE', enabled: true }, // Oct 8: gates passed (trailing-24h +5.6%/yr, 3+ consec pos, basis +0.03%) — armed pending capital
 };
 const ALLOC_USDC = parseFloat(process.env.CARRY_ALLOC || '0'); // deploy capital per run
 const MAX_BASIS = 0.01;   // refuse entry if spot/perp mid ratio deviates >1%
@@ -87,11 +89,6 @@ async function main() {
       console.log(`  funding: ${plan.annPct > 0 ? '+' : ''}${plan.annPct.toFixed(2)}%/yr (${(plan.funding * 100).toFixed(4)}%/h)`);
       console.log(`  basis:  ${((plan.basis - 1) * 100).toFixed(3)}% (spot ${plan.spotMid.toFixed(6)} vs perp ${plan.perpMark.toFixed(6)})`);
       console.log(`  verdict: ${plan.verdict}${plan.reasons.length ? ' — ' + plan.reasons.join('; ') : ''}`);
-      if (plan.verdict === 'GO' && ALLOC_USDC > 0) {
-        const perLeg = ALLOC_USDC / 2; // PURR+HYPE both GO → split; single GO gets half until HYPE flips
-        console.log(`  → order plan: BUY $${perLeg.toFixed(2)} spot ${plan.cfg.spot} @ ~${plan.spotMid.toFixed(6)}`);
-        console.log(`  → order plan: SHORT $${perLeg.toFixed(2)} ${plan.cfg.perp}-PERP @ ~${plan.perpMark.toFixed(6)}`);
-      }
       console.log();
     } catch (e) {
       console.log(`${legName}: ERROR ${e.message}`);
@@ -99,7 +96,18 @@ async function main() {
   }
 
   if (DRY) {
-    console.log('Dry-run complete. No orders placed. Capital required to arm:');
+    // Allocate across GO legs only (2026-10-08 fix): a lone GO leg was stranded at
+    // half alloc; split is over the GO set, computed once all plans are in.
+    const goLegs = snaps.filter(s => s.verdict === 'GO');
+    if (ALLOC_USDC > 0 && goLegs.length > 0) {
+      const perLeg = ALLOC_USDC / goLegs.length;
+      console.log(`\nALLOC: $${ALLOC_USDC.toFixed(2)} → ${perLeg.toFixed(2)} per GO leg (${goLegs.length} of ${snaps.length})`);
+      for (const plan of goLegs) {
+        console.log(`  → order plan: BUY $${perLeg.toFixed(2)} spot ${plan.cfg.spot} @ ~${plan.spotMid.toFixed(6)}`);
+        console.log(`  → order plan: SHORT $${perLeg.toFixed(2)} ${plan.cfg.perp}-PERP @ ~${plan.perpMark.toFixed(6)}`);
+      }
+    }
+    console.log('\nDry-run complete. No orders placed. Capital required to arm:');
     console.log('  1. Deposit USDC to Hyperliquid ( Arbitrum bridge → HL deposit address )');
     console.log('  2. export HL_PRIVATE_KEY=<your HL API wallet key>');
     console.log('  3. export CARRY_ALLOC=<USDC to deploy>');
