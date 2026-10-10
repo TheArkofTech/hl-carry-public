@@ -97,8 +97,12 @@ for (const [coin, samples] of Object.entries(data)) {
 lines.push('');
 const purrRates = data.PURR?.map(s => s.r) ?? [];
 const purr = purrRates.length ? purrRates.reduce((a, b) => a + b, 0) / purrRates.length : null;
+// basis is a point-in-time snapshot of the LAST watchdog run — it is only
+// truthful on a digest generated at the target day's rollover. On historical
+// backfills it would silently show TODAY's basis as that day's. Suppress it.
+const isHistorical = target < new Date(state.legs.PURR?.hist?.at(-1)?.t ?? 0).toISOString().slice(0, 10);
 if (purr !== null) {
-  const basis = legs.PURR?.lastBasis;
+  const basis = isHistorical ? null : legs.PURR?.lastBasis;
   lines.push('## Deploy status');
   lines.push('');
   lines.push(`- PURR carry: ${purr >= 0 ? '+' : ''}${(purr * 24 * 365 * 100).toFixed(1)}%/yr pace${basis ? `, spot/perp basis ${((basis - 1) * 100).toFixed(2)}% (within 1% gate)` : ''}`);
@@ -106,7 +110,7 @@ if (purr !== null) {
   const hype = hypeRates.length ? hypeRates.reduce((a, b) => a + b, 0) / hypeRates.length : null;
   if (hype !== null) {
     const hAnn = hype * 24 * 365 * 100;
-    const hBasis = legs.HYPE?.lastBasis;
+    const hBasis = isHistorical ? null : legs.HYPE?.lastBasis;
     const tAnn = trailingAnn('HYPE');
     const gate = tAnn === null ? 'insufficient trailing samples' : tAnn < 5 ? `trailing-24h ${tAnn >= 0 ? '+' : ''}${tAnn.toFixed(1)}%/yr below 5% hurdle — leg stays disabled` : `trailing-24h ${tAnn >= 0 ? '+' : ''}${tAnn.toFixed(1)}%/yr clears hurdle — size entry per carry-exec rules`;
     lines.push(`- HYPE: ${hAnn >= 0 ? '+' : ''}${hAnn.toFixed(1)}%/yr day pace from ${data.HYPE.length} samples${hBasis ? `, basis ${((hBasis - 1) * 100).toFixed(2)}%` : ''} — ${gate} (entry gate is trailing-24h, never a single sample).`);
