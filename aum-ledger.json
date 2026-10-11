@@ -16,6 +16,6 @@
   "high_water_mark_usd": 74.77,
   "leader_skin_usd": 73.77,
   "depositors": [],
-  "total_deposited": 0.33,
+  "total_deposited": 0,
   "api_revenue_note": "x402 sales: 33+ paid calls settled 2026-10-10; tracked by carry-sale.mjs"
 }
