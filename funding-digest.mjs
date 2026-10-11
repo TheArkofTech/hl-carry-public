@@ -60,6 +60,8 @@ lines.push(`Generated ${new Date().toISOString()} from ${Object.values(data).red
 lines.push('');
 lines.push('## Measured funding (UTC day, annualized)');
 lines.push('');
+lines.push('> Rate floor: HL default interest is 0.01%/8h = **+10.95%/yr**; ~85% of perps sit exactly there when balanced. Rates at/near floor are *baseline* carry (commodity — anyone can collect), not discovered edge. Deviations above floor are the signal this system hunts.');
+lines.push('');
 
 // Settled-prints cross-check: the watchdog samples PREDICTED funding at random
 // minute-of-hour; positions PAY the settled hourly print. One negative settled
