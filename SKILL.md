@@ -12,9 +12,9 @@ Payments settle on-chain (USDC, Solana mainnet) to the provider's wallet.
 
 **Base URL:** `https://devbox.tail873466.ts.net:10000`
 
-- `GET /carry/verdicts` — **$0.05** — live deploy/watch verdicts for tracked legs
-- `GET /carry/opportunities` — **$0.25** — full-universe hedgeable carry scan
-- `GET /carry/digest/latest` — **$0.01** — latest daily digest (markdown)
+- `GET /carry/verdicts` — **$0.10** — live deploy/watch verdicts for tracked legs
+- `GET /carry/opportunities` — **$0.50** — full-universe hedgeable carry scan
+- `GET /carry/digest/latest` — **$0.02** — latest daily digest (markdown)
 
 ## How to pay (the 402 flow)
 
