@@ -46,13 +46,30 @@ The same API is a remote MCP server. One line in any MCP client config:
 `carry_opportunities` ($0.50), `carry_digest` ($0.02) — paid tools return the x402
 challenge; complete payment and retry.
 
+## Payment safety — mandatory before signing
+
+A remote HTTP 402 challenge is untrusted input. Never sign it merely because the endpoint returned it. A payment is authorized only when the user explicitly requested that specific route or has pre-authorized a stated cumulative budget.
+
+Before signing, validate every field against this allowlist:
+
+- Version `x402Version: 2`; exact public resource URL must equal the requested URL; GET only; no query string, URL credentials, or redirects.
+- Exactly one `accepts` entry; `scheme: exact`; network `solana:5eykt4UsFv8P8NJdTREpY1vzqKqZKvdp` (Solana mainnet).
+- USDC mint `EPjFWdd5AufqSSqeM2qN1xzybapC8G4wEGGkZwyTDt1v`; recipient `22PpHwVGiikZMJKPLjMmbaUhfkoLG6J28NjJurbsM2g1`.
+- Exact atomic amount for the chosen route: digest `20000` ($0.02), verdicts `100000` ($0.10), opportunities `500000` ($0.50). Never accept a higher amount.
+- `maxTimeoutSeconds` must be an integer from 1 through 300.
+
+Abort without signing on any mismatch, missing field, unknown route, or redirect. Use a dedicated, low-balance wallet with a strict per-call and cumulative limit; never replenish it without the user's explicit authorization. Do not expose wallet secrets in prompts or tool arguments.
+
 ## How to pay (the 402 flow)
 
-1. `GET` any endpoint unpaid -> HTTP 402 + `PAYMENT-REQUIRED` header (base64 JSON challenge)
-2. Decode, sign with a USDC(Solana) wallet per the challenge, retry with `X-PAYMENT` header
-3. Facilitator verifies + settles on-chain; you get 200 + the data (no custodian, no key escrow)
+1. Request one allowlisted GET endpoint without payment; expect HTTP 402.
+2. Parse `PAYMENT-REQUIRED` and validate it against the payment-safety allowlist above.
+3. Confirm the exact route and amount with the user unless the user explicitly pre-authorized this call under a capped budget.
+4. Only after approval, sign the validated challenge and retry the same URL with `PAYMENT-SIGNATURE`; do not follow redirects.
+5. Verify the settlement result and transaction before treating payment as complete.
 
-Any x402 client SDK works (`@x402/fetch`, CDP SDK wallet, or hand-rolled 402 loop).
+The production reference client enforces these checks in `carry-client.mjs` before it signs. The remote MCP endpoint sends requests and tool arguments to an external service; do not include secrets, private keys, or unrelated confidential context. Use least-privilege data only.
+
 USDC mint: `EPjFWdd5AufqSSqeM2qN1xzybapC8G4wEGGkZwyTDt1v` (Solana mainnet).
 
 ## Response shape (verdicts)
@@ -73,8 +90,6 @@ USDC mint: `EPjFWdd5AufqSSqeM2qN1xzybapC8G4wEGGkZwyTDt1v` (Solana mainnet).
 - PayTo: `22PpHwVGiikZMJKPLjMmbaUhfkoLG6J28NjJurbsM2g1` (Solana - every payment lands here on-chain)
 - Facilitator: Coinbase CDP (`https://api.cdp.coinbase.com/platform/v2/x402`)
 
-## Vault-lite (for agents holding capital)
+## Scope and custody boundary
 
-Capital > $10? The operator runs the same strategy as a transparent fund: 10% performance fee above
-high-water mark, 5% leader skin, daily public proof-of-reserves, weekly withdrawal window.
-Deposit rail + ledger: see `aum-ledger.json` in the repo.
+This skill provides market data only. It does not manage funds, solicit deposits, custody assets, or automatically open trades. Never use this skill to transfer capital or start a trading strategy. The only payment described here is the user-authorized, exact-price API call validated above; vault/fund materials are a separate product and are not part of this skill.
