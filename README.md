@@ -22,8 +22,17 @@ Round-trip execution cost measured at **0.31%** (entry+exit, both legs). Payback
 
 - `carry-exec.mjs` — execution module. Dry-run by default; prints exact order plans and GO/NO-GO verdicts. Live mode requires explicit arming (`CARRY_LIVE=1` + key) and is intentionally not signed until capital is at stake.
 - `carry-monitor.mjs` — hourly watchdog. Logs every funding sample to `carry-state.json`; prints alerts ONLY on actionable events (funding spike, negative funding on a deploy leg, basis drift >1%). Silent = healthy.
-- `funding-digest.mjs` — daily digest generator: turns raw state into a shareable daily funding report (see `reports/`).
+- `funding-digest.mjs` — daily digest generator: turns raw state into a shareable daily funding report (see `reports/`). This is the product.
 - `reports/` — the track record. One markdown file per day, timestamped, generated from logged samples. This is the product.
+- `clawhub-skill/` — installable agent skill for buying this data per-call over x402.
+
+## Buy the data (API, MCP, skill)
+
+Live system, same data the watchdog logs — sold per call, no key, no account:
+
+- **HTTP/x402:** `https://devbox.tail873466.ts.net:10000` — verdicts $0.05 · full-universe scan $0.25 · daily digest $0.01 · **free sample** at `/carry/digest/free`
+- **MCP:** add `{"mcpServers":{"carry-intel":{"url":"https://devbox.tail873466.ts.net:10000/mcp"}}}` to any MCP client — free `tools/list`, x402-paid data tools
+- Payments settle on-chain (USDC, Solana) to `22PpHw…`, verifiable per transaction.
 
 ## Honest risk statement
 
