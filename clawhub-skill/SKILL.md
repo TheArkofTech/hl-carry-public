@@ -32,6 +32,19 @@ Payments settle on-chain (USDC, Solana mainnet). Listed in the Coinbase CDP Baza
 - `GET /carry/verdicts` - **$0.05** - live EDGE/BASELINE/NEG verdicts per tracked leg + basis gates
 - `GET /carry/opportunities` - **$0.25** - full-universe hedgeable carry scan (178 perps)
 - `GET /carry/digest/latest` - **$0.01** - latest daily digest (markdown)
+- `GET /carry/digest/free` - **FREE** - yesterday's digest (verify quality before paying)
+
+## MCP (no install)
+
+The same API is a remote MCP server. One line in any MCP client config:
+
+```json
+{"mcpServers":{"carry-intel":{"url":"https://devbox.tail873466.ts.net:10000/mcp"}}}
+```
+
+`tools/list` is free. Tools: `carry_free_sample` (free), `carry_verdicts` ($0.05),
+`carry_opportunities` ($0.25), `carry_digest` ($0.01) — paid tools return the x402
+challenge; complete payment and retry.
 
 ## How to pay (the 402 flow)
 
