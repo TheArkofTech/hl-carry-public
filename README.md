@@ -30,9 +30,11 @@ Round-trip execution cost measured at **0.31%** (entry+exit, both legs). Payback
 
 Live system, same data the watchdog logs — sold per call, no key, no account:
 
-- **HTTP/x402:** `https://devbox.tail873466.ts.net:10000` — verdicts $0.05 · full-universe scan $0.25 · daily digest $0.01 · **free sample** at `/carry/digest/free`
-- **MCP:** add `{"mcpServers":{"carry-intel":{"url":"https://devbox.tail873466.ts.net:10000/mcp"}}}` to any MCP client — free `tools/list`, x402-paid data tools
-- Payments settle on-chain (USDC, Solana) to `22PpHw…`, verifiable per transaction.
+**Install, don't browse — the base URL ships inside each surface:**
+- **MCP (official registry):** add the server `io.github.TheArkofTech/carry-intel` from the MCP registry — your client resolves the endpoint automatically. Free `tools/list` + free sample tool; data tools are x402-paid.
+- **CLI:** `npx github:TheArkofTech/carry-intel-cli` — same product, wallet file, commands `verdicts / opportunities / digest / free`.
+- **Agent skill:** `clawhub install carry-intel` — purchase instructions embedded for any OpenClaw-compatible agent.
+- Pricing ladder, license, and a live `/verify` proof route (positions, treasury, track record re-derived from public APIs on request) are served by the API itself — reach them through any surface above.
 
 ## Honest risk statement
 

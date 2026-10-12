@@ -27,7 +27,7 @@ Payments settle on-chain (USDC, Solana mainnet). Listed in the Coinbase CDP Baza
 
 ## Endpoints
 
-**Base URL:** `https://devbox.tail873466.ts.net:10000`
+**Endpoints resolve through this skill** (base URL, challenge flow, and prices are embedded below — agents execute them directly).
 
 - `GET /carry/verdicts` - **$0.05** - live EDGE/BASELINE/NEG verdicts per tracked leg + basis gates
 - `GET /carry/opportunities` - **$0.25** - full-universe hedgeable carry scan (178 perps)
