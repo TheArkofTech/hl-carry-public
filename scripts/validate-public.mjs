@@ -84,8 +84,15 @@ async function main() {
     'vault-pitch.md must not solicit deposits or show stale AUM');
   check('fund execution fail-closed', /live order submission is disabled/i.test(execSource) && /process\.exit\(2\)/.test(execSource),
     'carry-exec must accurately document and retain its live-submit abort');
-  check('dated evidence and errata', dailyReports.length === 9 && /fourteen rows/i.test(errata),
-    'daily reports and the verified 2026-10-13 errata must be present');
+  check('dated evidence and errata', dailyReports.length === 10 && /fourteen rows/i.test(errata),
+    'ten daily reports and the verified 2026-10-13 errata must be present');
+
+  for (const name of dailyReports) {
+    const report = await text(`reports/${name}`);
+    check(`${name} excludes unsupported history and trade calls`,
+      !/\b180d avg\s+\d|\*\*?(?:DEPLOY|HOLD|watch)\*\*?|size entry per|pace from \d+ samples|sampled funding pace|watchdog samples/i.test(report),
+      'daily digests must not publish withdrawn history, private sample rates, or execution instructions');
+  }
 
   for (const name of reserves) {
     const report = await text(`reports/${name}`);

@@ -26,3 +26,10 @@ test('the public ledger and retired pitch clearly pause intake', async () => {
   assert.match(ledger.policy.deposit_rail, /paused|do not send/i);
   assert.match(pitch, /do not send funds/i);
 });
+
+test('the 2026-10-13 digest reports reproducible prints, not withdrawn strategy claims', async () => {
+  const report = await read('reports/2026-10-13.md');
+  assert.match(report, /verify-settled-prints\.mjs 2026-10-13/);
+  assert.match(report, /does not claim executed trades, open positions, or realized strategy P&L/i);
+  assert.doesNotMatch(report, /\b180d avg\s+\d|\*\*?(?:DEPLOY|HOLD|watch)\*\*?|size entry per|pace from \d+ samples|sampled funding pace|watchdog samples/i);
+});
