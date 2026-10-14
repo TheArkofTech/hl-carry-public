@@ -47,6 +47,14 @@ The remote MCP endpoint is `https://devbox.tail873466.ts.net:10000/mcp`. `tools/
 {"mcpServers":{"carry-intel":{"url":"https://devbox.tail873466.ts.net:10000/mcp"}}}
 ```
 
+The separate read-only Carry Console MCP App [12][13] is available at `https://devbox.tail873466.ts.net:10000/mcp/carry-console`:
+
+```json
+{"mcpServers":{"carry-console":{"url":"https://devbox.tail873466.ts.net:10000/mcp/carry-console"}}}
+```
+
+Its `carry_opportunities_ui` tool renders the same **$0.50** scan.[12][4] Discovery is free. The current tool schema accepts only a `ui_refresh` interaction; payment authorization travels through the HTTP `PAYMENT-SIGNATURE` header, never tool arguments.[12][13] The app does not sign payments or execute trades.[13]
+
 ## Verification commands
 
 ```sh
@@ -71,3 +79,5 @@ This repository has no root open-source license; public visibility does not gran
 [7] https://hyperliquid.gitbook.io/hyperliquid-docs/for-developers/api/info-endpoint/perpetuals
 [10] https://mcprush.com/thearkoftech/carry-intel-hyperliquid-funding-carry-intelli-mcp
 [11] https://devbox.tail873466.ts.net:10000/mcp
+[12] https://devbox.tail873466.ts.net:10000/mcp/carry-console
+[13] https://github.com/TheArkofTech/x402-carry-api/blob/main/apps/carry-console/src/server.mjs

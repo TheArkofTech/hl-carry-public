@@ -14,7 +14,8 @@ test('public validation permits the next daily digest', async () => {
   try {
     await mkdir(path.join(dir, 'scripts'));
     await mkdir(path.join(dir, 'docs'));
-    for (const file of ['README.md','aum-ledger.json','carry-exec.mjs','docs/vault-pitch.md','scripts/validate-public.mjs']) {
+    await mkdir(path.join(dir, 'clawhub-skill'));
+    for (const file of ['README.md','aum-ledger.json','carry-exec.mjs','docs/vault-pitch.md','scripts/validate-public.mjs','clawhub-skill/SKILL.md']) {
       await cp(path.join(ROOT,file), path.join(dir,file));
     }
     await cp(path.join(ROOT,'reports'), path.join(dir,'reports'), {recursive:true});
@@ -50,4 +51,18 @@ test('the 2026-10-13 digest reports reproducible prints, not withdrawn strategy 
   assert.match(report, /verify-settled-prints\.mjs 2026-10-13/);
   assert.match(report, /does not claim executed trades, open positions, or realized strategy P&L/i);
   assert.doesNotMatch(report, /\b180d avg\s+\d|\*\*?(?:DEPLOY|HOLD|watch)\*\*?|size entry per|pace from \d+ samples|sampled funding pace|watchdog samples/i);
+});
+
+test('public README and ClawHub skill document the read-only Console MCP App consistently', async () => {
+  const readme = await read('README.md');
+  const skill = await read('clawhub-skill/SKILL.md');
+  for (const content of [readme, skill]) {
+    assert.match(content, /\/mcp\/carry-console/);
+    assert.match(content, /carry_opportunities_ui/);
+    assert.match(content, /\$0\.50/);
+    assert.match(content, /ui_refresh/);
+    assert.match(content, /PAYMENT-SIGNATURE/);
+    assert.match(content, /never tool arguments/i);
+    assert.match(content, /does not sign payments or execute trades/i);
+  }
 });
