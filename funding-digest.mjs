@@ -1,19 +1,23 @@
 /**
  * FUNDING DIGEST — turns carry-state.json (raw watchdog samples) into a shareable
- * daily markdown report. This is the track record: one file per day, timestamped,
- * generated only from actually-logged samples. No projections, no vibes.
+ * daily markdown report. The operator-only raw watchdog state is not published;
+ * only the settled fundingHistory rows can be independently reproduced here.
  *
- * Usage: node funding-digest.mjs [YYYY-MM-DD]   (default: today, or last covered day)
+ * Usage: CARRY_STATE_FILE=<private-state.json> node funding-digest.mjs [YYYY-MM-DD]
  */
 import fs from 'fs';
 import path from 'path';
+import { summarizeFundingHistory } from './scripts/verify-settled-prints.mjs';
 
-const STATE = 'C:/HermesVault/.hermes/scripts/carry-state.json';
+const STATE = process.env.CARRY_STATE_FILE;
+if (!STATE) {
+  console.error('Set CARRY_STATE_FILE to a private operator state file; none is bundled in this repository.');
+  process.exit(2);
+}
 const HL = 'https://api.hyperliquid.xyz/info';
 const OUT_DIR = path.resolve(import.meta.dirname, 'reports');
 
-const DEPLOY = { PURR: true, HYPE: true, PUMP: false, MON: false };
-const H180 = { PURR: 26.9, HYPE: 9.5, PUMP: 11.3, MON: 6.4 };
+const SCREEN_CANDIDATES = { PURR: true, HYPE: true, PUMP: false, MON: false };
 
 const state = JSON.parse(fs.readFileSync(STATE, 'utf8'));
 const legs = state.legs;
@@ -60,7 +64,7 @@ lines.push(`Generated ${new Date().toISOString()} from ${Object.values(data).red
 lines.push('');
 lines.push('## Measured funding (UTC day, annualized)');
 lines.push('');
-lines.push('> Rate floor: HL default interest is 0.01%/8h = **+10.95%/yr**; ~85% of perps sit exactly there when balanced. Rates at/near floor are *baseline* carry (commodity — anyone can collect), not discovered edge. Deviations above floor are the signal this system hunts.');
+lines.push('> HL default interest of 0.01% per 8h corresponds to **+10.95%/yr** when expressed as an annualized funding rate. A rate is not portfolio yield or realized return.');
 lines.push('');
 
 // Settled-prints cross-check: the watchdog samples PREDICTED funding at random
@@ -75,8 +79,8 @@ const settled = await Promise.all(Object.keys(data).map(async (coin) => {
     const r = await fetch(HL, { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ type: 'fundingHistory', coin, startTime: ds, endTime: de }) });
     const j = await r.json();
     if (!Array.isArray(j)) return [coin, null];
-    const rates = j.map(x => parseFloat(x.fundingRate));
-    return [coin, { n: rates.length, neg: rates.filter(x => x < 0).length, ann: (rates.reduce((a, b) => a + b, 0) / rates.length) * 24 * 365 * 100 }];
+    const summary = summarizeFundingHistory(j);
+    return [coin, { n: summary.prints, neg: summary.negativePrints, ann: summary.annualizedPct }];
   } catch { return [coin, null]; }
 }));
 for (const [coin, si] of settled) {
@@ -90,11 +94,11 @@ for (const [coin, samples] of Object.entries(data)) {
   const nBackfilled = samples.filter(s => s.src === 'api').length;
   const avg = rates.reduce((a, b) => a + b, 0) / rates.length;
   const ann = avg * 24 * 365 * 100;
-  const v = DEPLOY[coin] ? (trailingAnn(coin) ?? ann) : ann;
-  const tag = DEPLOY[coin] ? (v >= 5 ? 'DEPLOY' : v < 0 ? 'UNWIND-ZONE' : 'HOLD') : 'watch';
+  const v = SCREEN_CANDIDATES[coin] ? (trailingAnn(coin) ?? ann) : ann;
+  const tag = SCREEN_CANDIDATES[coin] ? (v >= 5 ? 'screen-pass' : v < 0 ? 'screen-negative' : 'screen-watch') : 'watch';
   const variance = Math.max(...rates) === Math.min(...rates) ? 'steady' : 'variable';
   const prov = nBackfilled ? ` (${nBackfilled} backfilled from HL API after watchdog outage)` : '';
-  lines.push(`- **${coin}** — ${ann >= 0 ? '+' : ''}${ann.toFixed(1)}%/yr pace from ${rates.length} samples${prov} (${variance}) · 180d avg ${H180[coin] ?? '?'}%/yr · **${tag}**`);
+  lines.push(`- **${coin}** — ${ann >= 0 ? '+' : ''}${ann.toFixed(1)}%/yr operator-sampled pace from ${rates.length} samples${prov} (${variance}) · **${tag}**`);
 }
 lines.push('');
 const purrRates = data.PURR?.map(s => s.r) ?? [];
@@ -105,22 +109,22 @@ const purr = purrRates.length ? purrRates.reduce((a, b) => a + b, 0) / purrRates
 const isHistorical = target < new Date(state.legs.PURR?.hist?.at(-1)?.t ?? 0).toISOString().slice(0, 10);
 if (purr !== null) {
   const basis = isHistorical ? null : legs.PURR?.lastBasis;
-  lines.push('## Deploy status');
+  lines.push('## Historical screen status (not execution)');
   lines.push('');
-  lines.push(`- PURR carry: ${purr >= 0 ? '+' : ''}${(purr * 24 * 365 * 100).toFixed(1)}%/yr pace${basis ? `, spot/perp basis ${((basis - 1) * 100).toFixed(2)}% (within 1% gate)` : ''}`);
+  lines.push(`- PURR sampled funding pace: ${purr >= 0 ? '+' : ''}${(purr * 24 * 365 * 100).toFixed(1)}%/yr${basis ? `, spot/perp basis ${((basis - 1) * 100).toFixed(2)}% (within 1% screen)` : ''}`);
   const hypeRates = data.HYPE?.map(s => s.r) ?? [];
   const hype = hypeRates.length ? hypeRates.reduce((a, b) => a + b, 0) / hypeRates.length : null;
   if (hype !== null) {
     const hAnn = hype * 24 * 365 * 100;
     const hBasis = isHistorical ? null : legs.HYPE?.lastBasis;
     const tAnn = trailingAnn('HYPE');
-    const gate = tAnn === null ? 'insufficient trailing samples' : tAnn < 5 ? `trailing-24h ${tAnn >= 0 ? '+' : ''}${tAnn.toFixed(1)}%/yr below 5% hurdle — leg stays disabled` : `trailing-24h ${tAnn >= 0 ? '+' : ''}${tAnn.toFixed(1)}%/yr clears hurdle — size entry per carry-exec rules`;
-    lines.push(`- HYPE: ${hAnn >= 0 ? '+' : ''}${hAnn.toFixed(1)}%/yr day pace from ${data.HYPE.length} samples${hBasis ? `, basis ${((hBasis - 1) * 100).toFixed(2)}%` : ''} — ${gate} (entry gate is trailing-24h, never a single sample).`);
+    const gate = tAnn === null ? 'insufficient trailing samples' : tAnn < 5 ? `trailing-24h ${tAnn >= 0 ? '+' : ''}${tAnn.toFixed(1)}%/yr below the 5% screen threshold` : `trailing-24h ${tAnn >= 0 ? '+' : ''}${tAnn.toFixed(1)}%/yr clears the 5% screen threshold`;
+    lines.push(`- HYPE: ${hAnn >= 0 ? '+' : ''}${hAnn.toFixed(1)}%/yr operator-sampled day pace from ${data.HYPE.length} samples${hBasis ? `, basis ${((hBasis - 1) * 100).toFixed(2)}%` : ''} — ${gate}; no position or live order is implied.`);
   }
   lines.push('');
 }
 lines.push('---');
-lines.push('*Part of the open funding-carry system. Every number here is reproducible from the raw state file or the public HL API.*');
+lines.push('*Operator-sampled pace is not independently reproducible because the raw state file is not published. Settled-print rows are separately sourced from the public HL API. Neither is realized strategy P&L; candidate labels are not positions.*');
 
 fs.mkdirSync(OUT_DIR, { recursive: true });
 const out = path.join(OUT_DIR, `${target}.md`);

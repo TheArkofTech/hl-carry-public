@@ -1,21 +1,25 @@
 {
+  "intake_status": "paused",
+  "status_as_of": "2026-10-13T22:57:21.137Z",
+  "terms_status": "inactive_legacy_unverified",
   "policy": {
-    "name": "carry-intel vault-lite",
+    "name": "carry-intel vault-lite (inactive; not an offer)",
+    "status": "paused",
     "performance_fee_pct": 10,
     "high_water_mark_usd": 74.77,
     "leader_skin_min_pct": 5,
     "min_deposit_usd": 10,
     "max_aum_usd": 1000,
-    "deposit_rail": "USDC (SPL EPjFWdd5AufqSSqeM2qN1xzybapC8G4wEGGkZwyTDt1v) -> Solana ATA 5tTpggZMysQZqFmYmTZsW9n7y5YSnjeCJzwUdPURV4oh with memo=agent-id",
-    "withdrawal_window": "weekly, settled on-chain",
-    "strategy": "HL funding-carry (baseline floor) + rotation into EDGE prints >12.5%/yr when hedgeable",
-    "proof": "reports/reserves-YYYY-MM-DD.md committed daily; all numbers from public APIs",
-    "risk_disclosure": "Not a smart-contract vault. Custody is operator-held with full public accounting. Deposit only what you can afford to lose. Carry rates are not guaranteed; funding flips negative regularly universe-wide.",
-    "sale_vs_deposit_rule": "Sub-$1 inflows from x402 facilitator settlement are API REVENUE (counted in sale-watcher), NOT vault deposits. Vault deposits: >= $10 from a non-system wallet, logged with sender + tx."
+    "deposit_rail": "PAUSED — no active deposit rail; do not send funds.",
+    "withdrawal_window": "inactive; no current program",
+    "strategy": "No active client strategy; the API is read-only.",
+    "proof": "Historical account-balance snapshots only; not an independent proof of reserves or client AUM.",
+    "risk_disclosure": "No investment product is currently open. Do not send funds. At status_as_of, /verify showed no open Hyperliquid perp positions. Funding rates are not returns.",
+    "sale_vs_deposit_rule": "API revenue is distinct from deposits. No deposit intake is active; any relaunch requires a current validated receive rail and explicit signed terms."
   },
   "high_water_mark_usd": 74.77,
   "leader_skin_usd": 73.77,
   "depositors": [],
   "total_deposited": 0,
-  "api_revenue_note": "x402 sales: 33+ paid calls settled 2026-10-10; tracked by carry-sale.mjs"
+  "api_revenue_note": "Legacy paid-call counter includes internal/self-funded settlements; it is not verified external revenue and never represents client AUM."
 }

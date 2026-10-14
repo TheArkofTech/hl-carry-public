@@ -1,0 +1,21 @@
+# Operator-only state and credentials
+.env
+.env.*
+!.env.example
+wallet.json
+**/wallet.json
+id_rsa
+id_ed25519
+credentials*.json
+secrets*.json
+service-account*.json
+carry-state.json
+**/carry-state.json
+*.pem
+*.key
+*.p12
+*.pfx
+
+# Local runtime/build artifacts
+node_modules/
+.DS_Store

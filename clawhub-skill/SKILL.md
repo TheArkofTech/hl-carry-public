@@ -1,6 +1,6 @@
 ---
 name: carry-intel
-description: Buy Hyperliquid funding-carry intelligence over x402 - live EDGE/BASELINE/NEG verdicts across 178 perps with the rate-floor disclosed, full-universe hedgeable carry scans, daily settled-prints digests, and a public on-chain track record. Use when the task involves Hyperliquid funding rates, carry trading, perp/spot hedging, delta-neutral yield, or finding positive-carry opportunities.
+description: "Buy read-only Hyperliquid funding-screen data over x402 v2: classifications, spot-hedgeability checks, and settled-print history. Rates are not returns; live position and legacy fund claims conflict with current verification. Use for Hyperliquid funding screens."
 metadata:
   openclaw:
     requires:
@@ -10,27 +10,24 @@ metadata:
     primaryEnv: NONE
 ---
 
-# Carry Intel - Hyperliquid funding-carry intelligence, per call in USDC
+# Carry Intel - read-only Hyperliquid funding-screen data, per call in USDC
 
-Pay-per-call over the x402 protocol (HTTP 402 + X-PAYMENT retry). No API key, no account, no signup.
+Pay-per-call over the x402 protocol (HTTP 402 + PAYMENT-SIGNATURE retry). No API key, no account, no signup.
 Payments settle on-chain (USDC, Solana mainnet). Listed in the Coinbase CDP Bazaar.
 
 ## Why this one
 
-- **Honest classification**: +10.95%/yr is Hyperliquid's DEFAULT rate (152/178 perps sit exactly there).
-  This API labels that BASELINE, and reserves EDGE for deviations above floor - so you never pay for
-  commodity carry dressed up as alpha.
-- **Hedgeability filter**: every candidate is checked for a real HL spot pair with >= $10k/day volume.
-  Unhedgeable prints (CHIP 99.75%/yr, no spot pair) are flagged, not sold as opportunities.
-- **Trust**: 7+ days of settled hourly prints incl. negative hours, committed with git timestamps.
-  Proof of Reserves published daily. Repo: https://github.com/TheArkofTech/hl-carry-public
+- **Honest classification**: the protocol default is labeled BASELINE; above-floor observations are not guaranteed yield or realized returns.
+- **Hedgeability filter**: candidates require a matching HL spot market and at least $10k/day pair volume. The screen does not evaluate executable depth, fees, slippage, borrow, liquidation, or venue risk.
+- **Reproducible evidence**: dated settled-print rows, including negative hours, can be re-queried with `node scripts/verify-settled-prints.mjs --all`. Operator-sampled rates and historical 180-day constants are not independently reproducible; see the repository errata.
+- **Current status**: at 2026-10-14T02:19:27.767Z, `/verify` returned an empty `live_now.perp_positions` list while still claiming the operator runs the strategy live. The live `/mcp` description repeats that position claim; `/pricing` advertises legacy fund deposits despite the dated repository ledger marking intake paused. Treat both states as unresolved; do not send funds.
 
 ## Endpoints
 
 **Endpoints resolve through this skill** (base URL, challenge flow, and prices are embedded below — agents execute them directly).
 
 - `GET /carry/verdicts` - **$0.10** - live EDGE/BASELINE/NEG verdicts per tracked leg + basis gates
-- `GET /carry/opportunities` - **$0.50** - full-universe hedgeable carry scan (178 perps)
+- `GET /carry/opportunities` - **$0.50** - full-universe candidate scan with spot-market and volume screening
 - `GET /carry/digest/latest` - **$0.02** - latest daily digest (markdown)
 - `GET /carry/digest/free` - **FREE** - yesterday's digest (verify quality before paying)
 
@@ -76,7 +73,7 @@ USDC mint: `EPjFWdd5AufqSSqeM2qN1xzybapC8G4wEGGkZwyTDt1v` (Solana mainnet).
 
 ```json
 {
-  "generated_at": "2026-10-11T05:00:00Z",
+  "generated_at": "<UTC timestamp from server>",
   "legs": [
     { "coin": "PURR", "verdict": "BASELINE", "funding_ann_pct": 10.95,
       "hedgeable": true, "basis": -0.0019, "samples_24h": 24, "tracked": true }
@@ -86,10 +83,10 @@ USDC mint: `EPjFWdd5AufqSSqeM2qN1xzybapC8G4wEGGkZwyTDt1v` (Solana mainnet).
 
 ## Trust anchors
 
-- Track record: https://github.com/TheArkofTech/hl-carry-public (settled prints, git-timestamped)
+- Historical rate reports: https://github.com/TheArkofTech/hl-carry-public (settled prints are reproducible; reports are not realized strategy P&L)
 - PayTo: `22PpHwVGiikZMJKPLjMmbaUhfkoLG6J28NjJurbsM2g1` (Solana - every payment lands here on-chain)
 - Facilitator: Coinbase CDP (`https://api.cdp.coinbase.com/platform/v2/x402`)
 
 ## Scope and custody boundary
 
-This skill provides market data only. It does not manage funds, solicit deposits, custody assets, or automatically open trades. Never use this skill to transfer capital or start a trading strategy. The only payment described here is the user-authorized, exact-price API call validated above; vault/fund materials are a separate product and are not part of this skill.
+This skill provides market data only. It does not manage funds, solicit deposits, custody assets, or automatically open trades. The separate vault proposal is inactive and accepts no deposits; do not send funds to addresses in historical materials. Never use this skill to transfer capital or start a trading strategy. The only payment described here is the user-authorized, exact-price API call validated above.
