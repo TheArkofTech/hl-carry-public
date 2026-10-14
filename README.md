@@ -1,51 +1,73 @@
-# Hyperliquid Funding Carry — Verified, Market-Neutral
+# Carry Intel — Hyperliquid funding and hedgeability screen
 
-An open, third-party-verifiable funding-rate carry system on Hyperliquid.
+## Funding rates are public. False hedges are expensive.
 
-**Strategy:** long spot + short equal perp notional on assets with persistently positive funding → collect the funding rate, delta-neutral to price moves.
+Carry Intel is a **read-only market-data service** for agents screening Hyperliquid funding. It separates the protocol's default funding floor from above-floor observations, checks for a matching spot market and a minimum 24-hour pair-volume threshold, and exposes settled funding prints—including negative hours.
 
-**Why this is credible (and how to verify it without trusting us):**
-- Every Hyperliquid account, position, and P&L is **public on-chain** via the HL API. We publish our account address; anyone can independently audit every fill, every funding payment, every basis entry/exit.
-- Funding rates are pulled live from `api.hyperliquid.xyz` — same data the watchdog logs hourly in this repo.
-- No performance claims without a timestamped, API-verifiable record.
+The product is the filter and the audit trail, not the raw funding rate. **Funding rates are not returns.** An annualized funding quote is not realized portfolio P&L; a spot/perp pair is not risk-free, and this screen does not model execution depth, fees, slippage, borrow, liquidation, or venue risk.
 
-## The edge (as measured, not projected)
+## Current product and pricing
 
-| Leg | 180d funding history | Live measured pace (54h, 58 samples) | Spot hedge |
-|-----|---------------------|--------------------------------------|-------------|
-| PURR | +26.9%/yr avg | **+11.0%/yr** (min = max = 0.0013%/h, rock steady) | PURR/USDC canonical pair, $1.6M/day |
-| HYPE | +9.5%/yr avg | −13%/yr (negative → leg disabled until flip) | @107, $32M/day |
+| Tool | Current price | What it returns |
+|---|---:|---|
+| `carry_free_sample` | Free | Prior-day digest |
+| `carry_digest` | $0.02/call | Latest digest |
+| `carry_verdicts` | $0.10/call | Funding classifications and available basis observations |
+| `carry_opportunities` | $0.50/call | Full-universe candidate scan with spot-market and volume screening |
 
-Round-trip execution cost measured at **0.31%** (entry+exit, both legs). Payback at +11%/yr ≈ 2.8 weeks.
+The API's current direct x402 ladder is 2¢, 10¢, and 50¢ per call.[4]
 
-## What's in this repo
+The MCPRush listing is already **Free ($0)** with no paid plan; its live page says the publisher endpoint is outside the marketplace path and MCPRush cannot bill for calls.[10]
 
-- `carry-exec.mjs` — execution module. Dry-run by default; prints exact order plans and GO/NO-GO verdicts. Live mode requires explicit arming (`CARRY_LIVE=1` + key) and is intentionally not signed until capital is at stake.
-- `carry-monitor.mjs` — hourly watchdog. Logs every funding sample to `carry-state.json`; prints alerts ONLY on actionable events (funding spike, negative funding on a deploy leg, basis drift >1%). Silent = healthy.
-- `funding-digest.mjs` — daily digest generator: turns raw state into a shareable daily funding report (see `reports/`). This is the product.
-- `reports/` — the track record. One markdown file per day, timestamped, generated from logged samples. This is the product.
-- `clawhub-skill/` — installable agent skill for buying this data per-call over x402.
+MCPRush's 12% platform fee is on net marketplace sales, with processing fees separate; it does not apply to these direct x402 calls.[1][10]
 
-## Buy the data (API, MCP, skill)
+The listing's paid-call prices and live-position claim are stale.[10][5] See [the prepared next-release copy](docs/mcprush-listing-copy.md).
 
-Live system, same data the watchdog logs — sold per call, no key, no account:
+An unpaid request to a paid route returns an HTTP 402 challenge. A client must independently validate the exact route and amount and obtain authorization before signing; the API does not silently charge a wallet.
 
-**Install, don't browse — the base URL ships inside each surface:**
-- **MCP (official registry):** add the server `io.github.TheArkofTech/carry-intel` from the MCP registry — your client resolves the endpoint automatically. Free `tools/list` + free sample tool; data tools are x402-paid.
-- **CLI:** `npx github:TheArkofTech/carry-intel-cli` — same product, wallet file, commands `verdicts / opportunities / digest / free`.
-- **Agent skill:** `clawhub install carry-intel` — purchase instructions embedded for any OpenClaw-compatible agent.
-- Pricing ladder, license, and a live `/verify` proof route (positions, treasury, track record re-derived from public APIs on request) are served by the API itself — reach them through any surface above.
+## Current status — do not confuse the data service with a fund
 
-## Honest risk statement
+- At `2026-10-14T02:19:27.767Z`, the live [`/verify` response](https://devbox.tail873466.ts.net:10000/verify) returned an empty `live_now.perp_positions` list while its claim field still asserted the operator runs the strategy live. The live `/mcp` tool description also claims "live position tracking."[5][11] The endpoint contradicts itself; do not repeat either live-position claim.
+- The checked-in `aum-ledger.json` is dated `2026-10-13T22:57:21.137Z` and records paused intake, no depositors, and `$0` recorded deposits. The live `/pricing` still advertises legacy fund deposits, so the repository record and API copy conflict. **Do not send funds** to an address found in an old commit or report.
+- `carry-exec.mjs` is a dry-run planner. Its live order-submission path exits with status 2; it does not place trades.
+- The current API [`/pricing`](https://devbox.tail873466.ts.net:10000/pricing) and `/fund` responses still contain stale fund/deposit copy that conflicts with this status.[4][5] Until those API surfaces are corrected, do not treat their fund section as an open offer or deposit route. The mismatch is documented in [verification boundaries](docs/verification.md).
 
-- Funding can flip negative on any leg; the watchdog alerts and the leg unwinds. Negative carry = exit, not hope.
-- Basis between spot and perp can exceed 1% in stressed markets; execution gates refuse entry above that.
-- PURR is a Hyperliquid-native memecoin. Funding has been remarkably stable (+0.0013%/h, zero variance across 58 samples), but the leg is sized so a total funding collapse costs only the round-trip (~0.31%), not principal. Principal risk is the venue, not the market.
-- This is not financial advice. It is a transparent, auditable system — judge it from the data.
+## What this repository can prove
 
-## Roadmap
+- The `settled prints` rows in `reports/YYYY-MM-DD.md` can be independently re-queried from Hyperliquid's public `fundingHistory` API.[7] Run `node scripts/verify-settled-prints.mjs --all` to check each reported rate, print count, and negative-hour count.
+- The historical watchdog sample pace is operator telemetry; its raw state file is not published here, so those sample values are not independently reproducible from this repository.
+- The historical `180d avg` values were hard-coded without the underlying series and are withdrawn. The `DEPLOY`/`HOLD` tags were model-screen labels, not proof of executed orders. See the [2026-10-13 errata](reports/errata-2026-10-13.md).
+- `reports/reserves-*.md` are dated account-balance snapshots, **not** an independent proof of reserves, client AUM, or strategy returns.
 
-1. **Now:** public repo, hourly watchdog data, daily digest reports.
-2. **First capital:** deploy live at small scale ($100–$500). Every hour of live P&L is on-chain and verifiable — the track record begins.
-3. **At ~$10k:** Hyperliquid Vault (10% performance fee, depositors can exit in 1 day, everything on-chain). Builder Vault variant if spot-in-vault is required for the pure carry.
-4. **Scale:** the published track record + on-chain auditability is the only marketing a vault needs.
+## Connect
+
+The remote MCP endpoint is `https://devbox.tail873466.ts.net:10000/mcp`. `tools/list` and the free sample are available without payment. Paid tool calls return the x402 challenge for their published route price.
+
+```json
+{"mcpServers":{"carry-intel":{"url":"https://devbox.tail873466.ts.net:10000/mcp"}}}
+```
+
+## Verification commands
+
+```sh
+curl -fsS https://devbox.tail873466.ts.net:10000/verify
+node scripts/verify-settled-prints.mjs 2026-10-12
+node scripts/verify-settled-prints.mjs --all
+node --test test/*.test.mjs
+node scripts/validate-public.mjs
+```
+
+The settled-print verifier makes public read-only data requests. It does not access keys, wallets, paid endpoints, or trading routes. `docs/verification.md` describes the evidence boundaries and known API-copy mismatch.
+
+## Licensing
+
+This repository has no root open-source license; public visibility does not grant reuse rights. See [license status](LICENSE-STATUS.md). The paid API response terms are published at <https://devbox.tail873466.ts.net:10000/license>.
+
+## Sources
+
+[1] https://mcprush.com/for-publishers
+[4] https://devbox.tail873466.ts.net:10000/pricing
+[5] https://devbox.tail873466.ts.net:10000/verify
+[7] https://hyperliquid.gitbook.io/hyperliquid-docs/for-developers/api/info-endpoint/perpetuals
+[10] https://mcprush.com/thearkoftech/carry-intel-hyperliquid-funding-carry-intelli-mcp
+[11] https://devbox.tail873466.ts.net:10000/mcp

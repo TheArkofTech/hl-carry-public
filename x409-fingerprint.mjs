@@ -4,40 +4,45 @@
  * Monitor-mode source script: runs before the agent every tick. Output MUST be
  * stable (no timestamps, no raw drift) — identical bytes suppress the agent run
  * entirely. The fingerprint fires the agent ONLY on state-class transitions:
- *   - a deploy leg's verdict changes (DEPLOY / WEAK / NEG)
+ *   - a tracked screen's class changes (SCREEN-PASS / SCREEN-WATCH / NEGATIVE)
  *   - a leg's basis class changes (OK / DRIFT>1%)
  *   - a new UTC day rolls over (daily digest due)
  *   - the public repo has uncommitted changes
- * Funding values are deliberately bucketed — 11.0% → 10.9% drift is noise,
- * verdict-class transitions are signal.
+ * Funding values are deliberately bucketed; classes are market-data labels, not
+ * trade instructions. A dirty tree requests review and does not authorize commit.
  */
 import fs from 'fs';
+import path from 'path';
 import { execSync } from 'child_process';
+import { fileURLToPath } from 'node:url';
 
-const STATE = 'C:/HermesVault/.hermes/scripts/carry-state.json';
-const REPO = 'C:/Users/franc/dev/hl-carry-public';
+const ROOT = path.dirname(fileURLToPath(import.meta.url));
+const STATE = process.env.CARRY_STATE_FILE;
+if (!STATE) {
+  console.error('Set CARRY_STATE_FILE to a private operator state file; none is bundled in this repository.');
+  process.exit(2);
+}
+const REPO = process.env.CARRY_PUBLIC_REPO || ROOT;
 
-const DEPLOY_LEGS = ['PURR', 'HYPE'];
+const SCREEN_LEGS = ['PURR', 'HYPE'];
 
 const classify = (annPct, streak = 0) =>
-  annPct < 0 ? 'NEG' : annPct < 5 ? 'WEAK' : (streak >= 3 ? 'DEPLOY' : 'WEAK');
+  annPct < 0 ? 'NEGATIVE' : annPct < 5 ? 'SCREEN-WATCH' : (streak >= 3 ? 'SCREEN-PASS' : 'SCREEN-WATCH');
 
 const state = JSON.parse(fs.readFileSync(STATE, 'utf8'));
 const now = Date.now();
 const DAY = 24 * 3600 * 1000;
 
 const parts = [];
-for (const coin of DEPLOY_LEGS) {
+for (const coin of SCREEN_LEGS) {
   const leg = state.legs[coin];
   if (!leg?.hist?.length) { parts.push(`${coin}:NODATA`); continue; }
   const recent = leg.hist.filter(h => h.t > now - DAY);
   const rates = recent.length >= 3 ? recent : leg.hist.slice(-3);
   const avg = rates.reduce((a, h) => a + h.r, 0) / rates.length;
   const ann = avg * 24 * 365 * 100;
-  // Persistence gate (2026-10-08): DEPLOY additionally requires 3+ consecutive
-  // positive samples at the live tail. A hair-margin avg flip (HYPE 5.32%/yr on
-  // a 2-sample streak, 5 negatives in-window) is entry noise, not deployable
-  // state — matches the entry gate and stops single-sample wake oscillation.
+  // Persistence gate: screen-pass requires 3+ consecutive positive samples.
+  // It is a data-class transition only; no order or position is implied.
   let streak = 0;
   for (let i = rates.length - 1; i >= 0; i--) { if (rates[i].r > 0) streak++; else break; }
   const verdict = classify(ann, streak);
@@ -49,7 +54,7 @@ for (const coin of DEPLOY_LEGS) {
 // digest due day (UTC) — changes once per day, wakes the agent to publish
 parts.push(`digest:${new Date().toISOString().slice(0, 10)}`);
 
-// repo cleanliness — dirty wakes the agent to commit
+// Repo cleanliness — dirty requests review; it never authorizes an automatic commit.
 try {
   const dirty = execSync('git status --porcelain', { cwd: REPO, encoding: 'utf8' }).trim();
   parts.push(dirty ? 'repo:dirty' : 'repo:clean');

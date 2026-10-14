@@ -1,24 +1,24 @@
 /**
- * CARRY MONITOR v2 — watchdog for the validated HL funding-carry edge.
- * Deploy legs (real spot hedges, verified Oct 4 2026):
- *   PURR — spot PURR/USDC ($1.6M/day, canonical, ctx keyed by NAME)
- *   HYPE — spot @107 ($32M/day, non-canonical, ctx keyed by @idx)
- * Rejected hedges (verified fake): PUMP @20 (mid = 1.4% of perp mark — different coin), MON @129 ($0/day, mid = 11% of perp).
- * Watchdog pattern: state logs EVERY run; stdout prints ONLY actionable events
- * (funding spike >=5bps/h, negative funding on deploy leg, |basis| > 1%).
- * Empty stdout = silent = nothing to do. Cron delivers stdout (alerts) to Telegram.
+ * CARRY MONITOR v2 — read-only Hyperliquid funding and spot-basis monitor.
+ * Tracked mappings are screening inputs, not open positions or executed hedges.
+ * This script records operator-only samples and emits alerts; it never trades
+ * and does not automatically unwind a position.
  */
 import fs from 'fs';
 
-const STATE_FILE = 'C:/HermesVault/.hermes/scripts/carry-state.json';
+const STATE_FILE = process.env.CARRY_STATE_FILE;
+if (!STATE_FILE) {
+  console.error('Set CARRY_STATE_FILE to a private operator state file; none is bundled in this repository.');
+  process.exit(2);
+}
 const HL = 'https://api.hyperliquid.xyz/info';
 const SPIKE = 0.0005; // 5bps/h ~= 43.8%/yr pace
 
 const LEGS = {
-  PURR: { spot: 'PURR/USDC', deploy: true,  hist180: 26.9 },
-  HYPE: { spot: '@107',      deploy: true,  hist180: 9.5  },
-  PUMP: { spot: null,        deploy: false, hist180: 11.3, note: 'fake hedge @20 — perp signal only' },
-  MON:  { spot: null,        deploy: false, hist180: 6.4,  note: 'spot dead $0/day' },
+  PURR: { spot: 'PURR/USDC', screen: true },
+  HYPE: { spot: '@107',      screen: true },
+  PUMP: { spot: null,        screen: false },
+  MON:  { spot: null,        screen: false },
 };
 
 async function hl(type, extra = {}) {
@@ -56,8 +56,8 @@ async function main() {
     if (st.hist.length > 3000) st.hist = st.hist.slice(-3000);
     if (funding >= SPIKE) st.lastSpike = t;
 
-    // hedge basis check for deploy legs
-    if (cfg.deploy && cfg.spot) {
+    // Observe basis only for configured screen mappings; this is not an execution gate.
+    if (cfg.screen && cfg.spot) {
       const sc = sctxs.find(x => x.coin === cfg.spot);
       if (sc && sc.midPx) {
         const basis = parseFloat(sc.midPx) / parseFloat(c.markPx);
@@ -68,8 +68,8 @@ async function main() {
       }
     }
 
-    if (funding >= SPIKE) alerts.push(`⚡ ${coin} FUNDING SPIKE ${(funding * 100).toFixed(3)}%/h = ${annPct.toFixed(0)}%/yr pace — carry entry window (${cfg.deploy ? 'DEPLOY LEG' : 'watch'})`);
-    if (cfg.deploy && funding < 0) alerts.push(`❄️ DEPLOY LEG ${coin} funding NEGATIVE ${(funding * 100).toFixed(4)}%/h — unwind candidate`);
+    if (funding >= SPIKE) alerts.push(`⚡ ${coin} FUNDING SPIKE ${(funding * 100).toFixed(3)}%/h = ${annPct.toFixed(0)}%/yr pace — review the candidate; no order is implied`);
+    if (cfg.screen && funding < 0) alerts.push(`❄️ ${coin} tracked funding screen is NEGATIVE ${(funding * 100).toFixed(4)}%/h — investigate manually; this monitor does not unwind positions`);
   }
 
   state.lastRun = new Date(t).toISOString();
