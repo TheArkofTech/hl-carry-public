@@ -14,7 +14,8 @@ test('public validation permits the next daily digest', async () => {
   try {
     await mkdir(path.join(dir, 'scripts'));
     await mkdir(path.join(dir, 'docs'));
-    for (const file of ['README.md','aum-ledger.json','carry-exec.mjs','docs/vault-pitch.md','scripts/validate-public.mjs']) {
+    await mkdir(path.join(dir, 'clawhub-skill'));
+    for (const file of ['README.md','aum-ledger.json','carry-exec.mjs','docs/vault-pitch.md','scripts/validate-public.mjs','clawhub-skill/SKILL.md']) {
       await cp(path.join(ROOT,file), path.join(dir,file));
     }
     await cp(path.join(ROOT,'reports'), path.join(dir,'reports'), {recursive:true});
