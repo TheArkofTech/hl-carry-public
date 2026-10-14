@@ -89,8 +89,8 @@ async function main() {
     'vault-pitch.md must not solicit deposits or show stale AUM');
   check('fund execution fail-closed', /live order submission is disabled/i.test(execSource) && /process\.exit\(2\)/.test(execSource),
     'carry-exec must accurately document and retain its live-submit abort');
-  check('dated evidence and errata', dailyReports.length === 10 && /fourteen rows/i.test(errata),
-    'ten daily reports and the verified 2026-10-13 errata must be present');
+  check('dated evidence and errata', dailyReports.length >= 10 && /fourteen rows/i.test(errata),
+    'at least ten daily reports and the verified 2026-10-13 errata must be present');
 
   for (const name of dailyReports) {
     const report = await text(`reports/${name}`);
