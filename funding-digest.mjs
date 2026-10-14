@@ -1,133 +1,44 @@
 /**
- * FUNDING DIGEST — turns carry-state.json (raw watchdog samples) into a shareable
- * daily markdown report. The operator-only raw watchdog state is not published;
- * only the settled fundingHistory rows can be independently reproduced here.
- *
- * Usage: CARRY_STATE_FILE=<private-state.json> node funding-digest.mjs [YYYY-MM-DD]
+ * Settled-only daily funding observations, not strategy P&L.
+ * Usage: node funding-digest.mjs [YYYY-MM-DD] (default: yesterday UTC).
+ * CARRY_REPORTS_DIR overrides output for isolated verification runs.
+ * No private state, wallet, payment, signer, or trading route is accessed.
  */
-import fs from 'fs';
-import path from 'path';
-import { summarizeFundingHistory } from './scripts/verify-settled-prints.mjs';
+import fs from 'node:fs';
+import path from 'node:path';
+import { summarizeFundingHistory, utcDayBounds } from './scripts/verify-settled-prints.mjs';
 
-const STATE = process.env.CARRY_STATE_FILE;
-if (!STATE) {
-  console.error('Set CARRY_STATE_FILE to a private operator state file; none is bundled in this repository.');
-  process.exit(2);
-}
 const HL = 'https://api.hyperliquid.xyz/info';
-const OUT_DIR = path.resolve(import.meta.dirname, 'reports');
+const OUT_DIR = process.env.CARRY_REPORTS_DIR || path.resolve(import.meta.dirname, 'reports');
+const COINS = ['PURR', 'HYPE', 'PUMP', 'MON'];
+const target = process.argv[2] || new Date(Date.now() - 86_400_000).toISOString().slice(0, 10);
+const { startTime, endTime } = utcDayBounds(target);
 
-const SCREEN_CANDIDATES = { PURR: true, HYPE: true, PUMP: false, MON: false };
-
-const state = JSON.parse(fs.readFileSync(STATE, 'utf8'));
-const legs = state.legs;
-
-// group samples by UTC day (keep whole sample: rate + provenance)
-const days = {};
-for (const [coin, st] of Object.entries(legs)) {
-  for (const s of st.hist || []) {
-    const d = new Date(s.t).toISOString().slice(0, 10);
-    (days[d] ??= {})[coin] ??= [];
-    days[d][coin].push(s);
-  }
-}
-
-// Publish the most recently COMPLETED UTC day (T+1): at rollover the new day
-// has only 1-2 samples — a digest of it would be a junk fragment, and the
-// completed day would never get its final numbers into the track record.
-// Explicit argv (e.g. a partial-day snapshot) still wins.
-// Backfill mode: explicit argv can name ANY historical day (e.g. after an
-// outage recovery, digest day 2026-10-08 after the fact).
-const today = new Date().toISOString().slice(0, 10);
-const dayKeys = Object.keys(days).sort();
-const priorDays = dayKeys.filter(d => d < today);
-const target = process.argv[2] || (priorDays.length ? priorDays[priorDays.length - 1] : dayKeys[dayKeys.length - 1]);
-const data = days[target];
-if (!data) { console.error(`no samples for ${target}`); process.exit(1); }
-
-// Anchor trailing-24h at the END of the target day (T+0 23:59Z), not the live
-// tail: after backfill, a historical digest's verdict must reflect funding at
-// that day's close — never today's rates smeared over the past.
-const dayEnd = Date.parse(target + 'T23:59:59.999Z');
-const trailingAnn = (coin) => {
-  const h = (legs[coin]?.hist || []).filter(s => s.t <= dayEnd);
-  if (!h.length) return null;
-  const lastT = h[h.length - 1].t;
-  const w = h.filter(s => lastT - s.t < 86400000);
-  return w.length >= 3 ? (w.reduce((a, b) => a + b.r, 0) / w.length) * 24 * 365 * 100 : null;
-};
-
-const lines = [];
-lines.push(`# Hyperliquid Funding Digest — ${target}`);
-lines.push('');
-lines.push(`Generated ${new Date().toISOString()} from ${Object.values(data).reduce((a, b) => a + b.length, 0)} logged watchdog samples. Funding rates are hourly API pulls — verify independently at api.hyperliquid.xyz.`);
-lines.push('');
-lines.push('## Measured funding (UTC day, annualized)');
-lines.push('');
-lines.push('> HL default interest of 0.01% per 8h corresponds to **+10.95%/yr** when expressed as an annualized funding rate. A rate is not portfolio yield or realized return.');
-lines.push('');
-
-// Settled-prints cross-check: the watchdog samples PREDICTED funding at random
-// minute-of-hour; positions PAY the settled hourly print. One negative settled
-// hour can sit inside a "steady" sampled day (PURR 2026-10-08: settled 00:00Z
-// -3.8e-5 vs sampled day +10.6%/yr) — publish both so the track record never
-// overstates carry income.
-const ds = Date.parse(target + 'T00:00:00Z');
-const de = ds + 86400000;
-const settled = await Promise.all(Object.keys(data).map(async (coin) => {
-  try {
-    const r = await fetch(HL, { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ type: 'fundingHistory', coin, startTime: ds, endTime: de }) });
-    const j = await r.json();
-    if (!Array.isArray(j)) return [coin, null];
-    const summary = summarizeFundingHistory(j);
-    return [coin, { n: summary.prints, neg: summary.negativePrints, ann: summary.annualizedPct }];
-  } catch { return [coin, null]; }
+const settled = await Promise.all(COINS.map(async (coin) => {
+  const response = await fetch(HL, {
+    method: 'POST', headers: { 'Content-Type': 'application/json' },
+    body: JSON.stringify({ type: 'fundingHistory', coin, startTime, endTime }),
+    signal: AbortSignal.timeout(15_000),
+  });
+  if (!response.ok) throw new Error(`Hyperliquid HTTP ${response.status} for ${coin} ${target}`);
+  const rows = await response.json();
+  const filtered = rows.filter(row => Number(row.time) >= startTime && Number(row.time) < endTime);
+  const hours = new Set(filtered.map(row => Math.floor((Number(row.time) - startTime) / 3_600_000)));
+  if (filtered.length !== 24 || hours.size !== 24) throw new Error(`incomplete settled day for ${coin} ${target}: ${filtered.length} prints / ${hours.size} hours`);
+  return { coin, ...summarizeFundingHistory(filtered) };
 }));
-for (const [coin, si] of settled) {
-  if (!si) continue;
-  lines.push(`- **${coin} settled prints** — ${si.ann >= 0 ? '+' : ''}${si.ann.toFixed(1)}%/yr over ${si.n} hourly prints${si.neg ? ` ⚠️ ${si.neg} NEGATIVE hour${si.neg > 1 ? 's' : ''} (paid rate)` : ''}`);
-}
-lines.push('');
 
-for (const [coin, samples] of Object.entries(data)) {
-  const rates = samples.map(s => s.r);
-  const nBackfilled = samples.filter(s => s.src === 'api').length;
-  const avg = rates.reduce((a, b) => a + b, 0) / rates.length;
-  const ann = avg * 24 * 365 * 100;
-  const v = SCREEN_CANDIDATES[coin] ? (trailingAnn(coin) ?? ann) : ann;
-  const tag = SCREEN_CANDIDATES[coin] ? (v >= 5 ? 'screen-pass' : v < 0 ? 'screen-negative' : 'screen-watch') : 'watch';
-  const variance = Math.max(...rates) === Math.min(...rates) ? 'steady' : 'variable';
-  const prov = nBackfilled ? ` (${nBackfilled} backfilled from HL API after watchdog outage)` : '';
-  lines.push(`- **${coin}** — ${ann >= 0 ? '+' : ''}${ann.toFixed(1)}%/yr operator-sampled pace from ${rates.length} samples${prov} (${variance}) · **${tag}**`);
-}
-lines.push('');
-const purrRates = data.PURR?.map(s => s.r) ?? [];
-const purr = purrRates.length ? purrRates.reduce((a, b) => a + b, 0) / purrRates.length : null;
-// basis is a point-in-time snapshot of the LAST watchdog run — it is only
-// truthful on a digest generated at the target day's rollover. On historical
-// backfills it would silently show TODAY's basis as that day's. Suppress it.
-const isHistorical = target < new Date(state.legs.PURR?.hist?.at(-1)?.t ?? 0).toISOString().slice(0, 10);
-if (purr !== null) {
-  const basis = isHistorical ? null : legs.PURR?.lastBasis;
-  lines.push('## Historical screen status (not execution)');
-  lines.push('');
-  lines.push(`- PURR sampled funding pace: ${purr >= 0 ? '+' : ''}${(purr * 24 * 365 * 100).toFixed(1)}%/yr${basis ? `, spot/perp basis ${((basis - 1) * 100).toFixed(2)}% (within 1% screen)` : ''}`);
-  const hypeRates = data.HYPE?.map(s => s.r) ?? [];
-  const hype = hypeRates.length ? hypeRates.reduce((a, b) => a + b, 0) / hypeRates.length : null;
-  if (hype !== null) {
-    const hAnn = hype * 24 * 365 * 100;
-    const hBasis = isHistorical ? null : legs.HYPE?.lastBasis;
-    const tAnn = trailingAnn('HYPE');
-    const gate = tAnn === null ? 'insufficient trailing samples' : tAnn < 5 ? `trailing-24h ${tAnn >= 0 ? '+' : ''}${tAnn.toFixed(1)}%/yr below the 5% screen threshold` : `trailing-24h ${tAnn >= 0 ? '+' : ''}${tAnn.toFixed(1)}%/yr clears the 5% screen threshold`;
-    lines.push(`- HYPE: ${hAnn >= 0 ? '+' : ''}${hAnn.toFixed(1)}%/yr operator-sampled day pace from ${data.HYPE.length} samples${hBasis ? `, basis ${((hBasis - 1) * 100).toFixed(2)}%` : ''} — ${gate}; no position or live order is implied.`);
-  }
-  lines.push('');
-}
-lines.push('---');
-lines.push('*Operator-sampled pace is not independently reproducible because the raw state file is not published. Settled-print rows are separately sourced from the public HL API. Neither is realized strategy P&L; candidate labels are not positions.*');
-
+const lines = [
+  `# Hyperliquid Funding Digest — ${target}`, '',
+  `Generated ${new Date().toISOString()} from public Hyperliquid fundingHistory. Window: ${new Date(startTime).toISOString()} <= time < ${new Date(endTime).toISOString()}.`, '',
+  '## Measured funding (UTC day, annualized)', '',
+  '> HL default interest of 0.01% per 8h corresponds to **+10.95%/yr** when expressed as an annualized funding rate. Funding rates are not returns.', '',
+  ...settled.map(s => `- **${s.coin} settled prints** — ${s.annualizedPct >= 0 ? '+' : ''}${s.annualizedPct.toFixed(1)}%/yr over ${s.prints} hourly prints${s.negativePrints ? ` ⚠️ ${s.negativePrints} NEGATIVE hour${s.negativePrints > 1 ? 's' : ''} (paid rate)` : ''}`), '',
+  '---',
+  `*Recheck settled-print figures with \`node scripts/verify-settled-prints.mjs ${target}\`. This report does not claim executed trades, open positions, or realized strategy P&L.*`,
+];
 fs.mkdirSync(OUT_DIR, { recursive: true });
 const out = path.join(OUT_DIR, `${target}.md`);
 fs.writeFileSync(out, lines.join('\n'));
-console.log(`✅ ${out}`);
+console.log(`Generated ${out}`);
 console.log(lines.join('\n'));

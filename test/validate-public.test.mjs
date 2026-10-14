@@ -1,11 +1,29 @@
 import test from 'node:test';
 import assert from 'node:assert/strict';
-import { readFile } from 'node:fs/promises';
+import { readFile, mkdtemp, mkdir, cp, writeFile, rm } from 'node:fs/promises';
+import os from 'node:os';
+import { spawnSync } from 'node:child_process';
 import path from 'node:path';
 import { fileURLToPath } from 'node:url';
 
 const ROOT = path.resolve(path.dirname(fileURLToPath(import.meta.url)), '..');
 const read = (file) => readFile(path.join(ROOT, file), 'utf8');
+
+test('public validation permits the next daily digest', async () => {
+  const dir = await mkdtemp(path.join(process.env.TMPDIR || os.tmpdir(), 'public-growth-test-'));
+  try {
+    await mkdir(path.join(dir, 'scripts'));
+    await mkdir(path.join(dir, 'docs'));
+    for (const file of ['README.md','aum-ledger.json','carry-exec.mjs','docs/vault-pitch.md','scripts/validate-public.mjs']) {
+      await cp(path.join(ROOT,file), path.join(dir,file));
+    }
+    await cp(path.join(ROOT,'reports'), path.join(dir,'reports'), {recursive:true});
+    await writeFile(path.join(dir,'reports/2026-10-14.md'), '# Next-day test fixture\nFunding rates are not returns.');
+    const result=spawnSync(process.execPath,[path.join(dir,'scripts/validate-public.mjs')],{encoding:'utf8',timeout:10000});
+    assert.equal(result.status,0,result.stderr);
+    assert.equal(JSON.parse(result.stdout).ok,true);
+  } finally { await rm(dir,{recursive:true,force:true}); }
+});
 
 test('published reserve reports do not claim client AUM or an independent audit', async () => {
   for (const file of ['reports/reserves-2026-10-11.md', 'reports/reserves-2026-10-12.md']) {
