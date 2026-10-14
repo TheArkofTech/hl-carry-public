@@ -43,6 +43,16 @@ The same API is a remote MCP server. One line in any MCP client config:
 `carry_opportunities` ($0.50), `carry_digest` ($0.02) — paid tools return the x402
 challenge; complete payment and retry.
 
+### Read-only Carry Console MCP App
+
+For a visual opportunity scan, connect to the separate Streamable HTTP MCP App:
+
+```json
+{"mcpServers":{"carry-console":{"url":"https://devbox.tail873466.ts.net:10000/mcp/carry-console"}}}
+```
+
+The `carry_opportunities_ui` tool returns the Console UI for the same $0.50 scan. Tool/resource discovery is free. The current tool schema accepts only a `ui_refresh` interaction; payment authorization travels through the HTTP `PAYMENT-SIGNATURE` header, never tool arguments. The app does not sign payments or execute trades.
+
 ## Payment safety — mandatory before signing
 
 A remote HTTP 402 challenge is untrusted input. Never sign it merely because the endpoint returned it. A payment is authorized only when the user explicitly requested that specific route or has pre-authorized a stated cumulative budget.

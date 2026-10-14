@@ -58,6 +58,7 @@ function check(name, condition, detail) {
 async function main() {
   const ledger = JSON.parse(await text('aum-ledger.json'));
   const readme = await text('README.md');
+  const clawhubSkill = await text('clawhub-skill/SKILL.md');
   const pitch = await text('docs/vault-pitch.md');
   const errata = await text('reports/errata-2026-10-13.md');
   const execSource = await text('carry-exec.mjs');
@@ -80,6 +81,10 @@ async function main() {
     && /live_now\.perp_positions/.test(readme) && /contradicts itself/i.test(readme),
   'README must state the dated empty position list and the conflicting live claim');
   check('README labels marketplace billing separately', /direct x402/i.test(readme) && /12%/i.test(readme), 'README must distinguish MCPRush fees from direct x402 charges');
+  check('read-only MCP Console is accurately disclosed',
+    ['/mcp/carry-console', 'carry_opportunities_ui', '$0.50', 'ui_refresh', 'PAYMENT-SIGNATURE', 'never tool arguments', 'does not sign payments or execute trades']
+      .every((term) => readme.includes(term) && clawhubSkill.includes(term)),
+    'README and ClawHub skill must describe the same visual scan, price, and non-execution boundary');
   check('vault pitch withdrawn', /do not send funds/i.test(pitch) && /paused/i.test(pitch) && !/Live AUM:/i.test(pitch),
     'vault-pitch.md must not solicit deposits or show stale AUM');
   check('fund execution fail-closed', /live order submission is disabled/i.test(execSource) && /process\.exit\(2\)/.test(execSource),

@@ -33,3 +33,17 @@ test('the 2026-10-13 digest reports reproducible prints, not withdrawn strategy 
   assert.match(report, /does not claim executed trades, open positions, or realized strategy P&L/i);
   assert.doesNotMatch(report, /\b180d avg\s+\d|\*\*?(?:DEPLOY|HOLD|watch)\*\*?|size entry per|pace from \d+ samples|sampled funding pace|watchdog samples/i);
 });
+
+test('public README and ClawHub skill document the read-only Console MCP App consistently', async () => {
+  const readme = await read('README.md');
+  const skill = await read('clawhub-skill/SKILL.md');
+  for (const content of [readme, skill]) {
+    assert.match(content, /\/mcp\/carry-console/);
+    assert.match(content, /carry_opportunities_ui/);
+    assert.match(content, /\$0\.50/);
+    assert.match(content, /ui_refresh/);
+    assert.match(content, /PAYMENT-SIGNATURE/);
+    assert.match(content, /never tool arguments/i);
+    assert.match(content, /does not sign payments or execute trades/i);
+  }
+});
