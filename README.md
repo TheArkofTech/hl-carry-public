@@ -4,6 +4,8 @@
 
 Carry Intel is a **read-only market-data service** for agents screening Hyperliquid funding. It separates the protocol's default funding floor from above-floor observations, checks for a matching spot market and a minimum 24-hour pair-volume threshold, and exposes settled funding prints—including negative hours.
 
+**Try the data first:** [open the free prior-day settled-funding digest](https://devbox.tail873466.ts.net:10000/carry/digest/free?src=github) (no wallet, sign-in, or payment). Agents can instead call `carry_free_sample` on the remote MCP server. Check the dated negative prints and limitations before choosing the fresh $0.02 digest, $0.10 verdicts, or $0.50 spot-screened opportunity scan. The free sample is not a position, trade, or return report.
+
 The product is the filter and the audit trail, not the raw funding rate. **Funding rates are not returns.** An annualized funding quote is not realized portfolio P&L; a spot/perp pair is not risk-free, and this screen does not model execution depth, fees, slippage, borrow, liquidation, or venue risk.
 
 ## Current product and pricing
