@@ -77,9 +77,17 @@ async function main() {
   check('no high-confidence credential patterns', credentialFindings.length === 0,
     `credential pattern finding count=${credentialFindings.length}${credentialFindings.length ? ` (${credentialFindings.join('; ')})` : ''}`);
   check('README distinguishes rates from returns', /funding rates are not returns/i.test(readme), 'README must not imply annualized rates are realized P&L');
-  check('README discloses contradictory live status', /At `\d{4}-\d{2}-\d{2}T\d{2}:\d{2}:\d{2}\.\d{3}Z`, the live \[`\/verify` response\]/.test(readme)
-    && /live_now\.perp_positions/.test(readme) && /contradicts itself/i.test(readme),
-  'README must state the dated empty position list and the conflicting live claim');
+  check('README reports the corrected time-bounded API status', readme.includes('2026-10-15T13:46:15.370Z')
+    && /No open Hyperliquid perp positions were returned/i.test(readme)
+    && /positions, trades, and returns are not verified/i.test(readme)
+    && /fund_intake.{0,40}paused/i.test(readme)
+    && !/claim field still asserted|pricing still advertises legacy fund/i.test(readme),
+  'README must describe the current verification boundary and paused intake without repeating superseded API claims');
+  check('ClawHub skill reports the current evidence boundary', /position_status.{0,20}unverified/i.test(clawhubSkill)
+    && /positions, trades, and returns are not verified/i.test(clawhubSkill)
+    && /capital intake is paused/i.test(clawhubSkill)
+    && !/live position and legacy fund claims conflict/i.test(clawhubSkill),
+  'ClawHub skill must distinguish funding observations from positions, returns, and paused investor intake');
   check('README labels marketplace billing separately', /direct x402/i.test(readme) && /12%/i.test(readme), 'README must distinguish MCPRush fees from direct x402 charges');
   check('read-only MCP Console is accurately disclosed',
     ['/mcp/carry-console', 'carry_opportunities_ui', '$0.50', 'ui_refresh', 'PAYMENT-SIGNATURE', 'never tool arguments', 'does not sign payments or execute trades']

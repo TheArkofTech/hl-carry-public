@@ -66,3 +66,24 @@ test('public README and ClawHub skill document the read-only Console MCP App con
     assert.match(content, /does not sign payments or execute trades/i);
   }
 });
+
+test('published copy matches current API evidence and flags the marketplace mismatch', async () => {
+  const readme = await read('README.md');
+  const verification = await read('docs/verification.md');
+  const pitch = await read('docs/vault-pitch.md');
+  const listing = await read('docs/mcprush-listing-copy.md');
+  const errata = await read('reports/errata-2026-10-13.md');
+  const skill = await read('clawhub-skill/SKILL.md');
+
+  assert.ok(readme.includes('2026-10-15T13:46:15.370Z'));
+  assert.match(readme, /positions, trades, and returns are not verified/i);
+  assert.match(verification, /16f8301/);
+  assert.ok(verification.includes('fund_intake.status` is `paused'));
+  assert.match(pitch, /data access only/i);
+  assert.match(listing, /Published MCPRush `carry_verdicts` override/);
+  assert.match(listing, /main marketplace description still requires a clean replacement/i);
+  assert.match(errata, /2026-10-15 resolution update/i);
+  assert.match(skill, /position_status.{0,20}unverified/i);
+  assert.match(skill, /capital intake is paused/i);
+  assert.doesNotMatch(skill, /live position and legacy fund claims conflict/i);
+});

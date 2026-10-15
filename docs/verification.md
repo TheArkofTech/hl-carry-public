@@ -25,13 +25,13 @@ The verifier makes unauthenticated public API requests. It does not access a wal
 
 ## Current-state check
 
-The live `/verify` endpoint re-queries public Hyperliquid and Solana APIs. At `2026-10-14T02:19:27.767Z`, its `live_now.perp_positions` list was empty, while its `claim` field still said the operator runs the advertised carry position live.[5] The live `/mcp` tool description also claims "live position tracking."[11] Do not repeat the live-strategy claim; re-run `/verify` before relying on any current account-state claim:
+The live `/verify` endpoint re-queries public Hyperliquid and Solana APIs. At `2026-10-15T13:46:15.370Z`, it returned the claim “No open Hyperliquid perp positions were returned for the operator address at verification time” with an empty `live_now.perp_positions` list.[5] This is a time-bounded account snapshot; the response caveat says it does not verify a carry strategy, trades, or returns. The live `/mcp` `tools/list` now describes verdicts as read-only and says positions, trades, and returns are not verified.[11] The API correction merged as x402-carry-api PR #3 (`16f8301`). Re-run `/verify` before relying on later account-state claims:
 
 ```sh
 curl -fsS https://devbox.tail873466.ts.net:10000/verify
 ```
 
-The current `/pricing` response describes a "live, on-chain-verifiable trading system" and advertises a fund with "deposits >= $10 USDC"; `/verify` still claims live operation despite the empty position list.[4][5] The live `/mcp` text repeats the unsupported position claim.[11] Until `/pricing`, `/fund`, `/verify`, and `/mcp` descriptions are corrected in the shared API checkout, do not interpret the fund section as an open offer or deposit route. The per-call API prices are $0.10 for verdicts, $0.50 for the opportunities scan, and $0.02 for the latest digest; verify the current 402 amount before authorizing any payment.[4]
+The current `/pricing` response offers data-access tiers at $0.10 for verdicts, $0.50 for the opportunities scan, and $0.02 for the latest digest; `fund_intake.status` is `paused`. `/fund` returns paused status and accepts no investor deposits.[4][5] The live tool descriptions and these funding boundaries were read back after PR #3 deployed. These endpoints are dynamic; a prior snapshot does not prove later positions or returns. The MCPRush listing is an independent surface: its short description, prices, and tool override are current, but its long rich-text description still contains stale `/verify` and `/pricing` warnings; see [the listing read-back](mcprush-listing-copy.md).
 
 ## Licensing
 

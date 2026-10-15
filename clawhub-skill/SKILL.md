@@ -1,6 +1,6 @@
 ---
 name: carry-intel
-description: "Buy read-only Hyperliquid funding-screen data over x402 v2: classifications, spot-hedgeability checks, and settled-print history. Rates are not returns; live position and legacy fund claims conflict with current verification. Use for Hyperliquid funding screens."
+description: "Read-only Hyperliquid funding data via x402."
 metadata:
   openclaw:
     requires:
@@ -20,7 +20,7 @@ Payments settle on-chain (USDC, Solana mainnet). Listed in the Coinbase CDP Baza
 - **Honest classification**: the protocol default is labeled BASELINE; above-floor observations are not guaranteed yield or realized returns.
 - **Hedgeability filter**: candidates require a matching HL spot market and at least $10k/day pair volume. The screen does not evaluate executable depth, fees, slippage, borrow, liquidation, or venue risk.
 - **Reproducible evidence**: dated settled-print rows, including negative hours, can be re-queried with `node scripts/verify-settled-prints.mjs --all`. Operator-sampled rates and historical 180-day constants are not independently reproducible; see the repository errata.
-- **Current status**: at 2026-10-14T02:19:27.767Z, `/verify` returned an empty `live_now.perp_positions` list while still claiming the operator runs the strategy live. The live `/mcp` description repeats that position claim; `/pricing` advertises legacy fund deposits despite the dated repository ledger marking intake paused. Treat both states as unresolved; do not send funds.
+- **Current status**: at 2026-10-15T13:46:15.370Z, `/verify` reported no open Hyperliquid perp positions at verification time. The live `/mcp` `tools/list` describes verdicts as read-only and says positions, trades, and returns are not verified. `/pricing` lists data-access tiers and says capital intake is paused (`fund_intake.status=paused`); `/fund` is status-only and accepts no investor deposits. These are time-bounded public read-backs; recheck before relying on later account state.
 
 ## Endpoints
 
@@ -86,7 +86,8 @@ USDC mint: `EPjFWdd5AufqSSqeM2qN1xzybapC8G4wEGGkZwyTDt1v` (Solana mainnet).
   "generated_at": "<UTC timestamp from server>",
   "legs": [
     { "coin": "PURR", "verdict": "BASELINE", "funding_ann_pct": 10.95,
-      "hedgeable": true, "basis": -0.0019, "samples_24h": 24, "tracked": true }
+      "hedgeable": true, "basis": -0.0019, "samples_24h": 24, "tracked": true,
+      "position_status": "unverified", "position": null }
   ]
 }
 ```

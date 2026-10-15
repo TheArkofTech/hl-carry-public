@@ -21,16 +21,16 @@ The MCPRush listing is already **Free ($0)** with no paid plan; its live page sa
 
 MCPRush's 12% platform fee is on net marketplace sales, with processing fees separate; it does not apply to these direct x402 calls.[1][10]
 
-The listing's paid-call prices and live-position claim are stale.[10][5] See [the prepared next-release copy](docs/mcprush-listing-copy.md).
+MCPRush's short description, route prices, and `carry_verdicts` tool override are current; its long “What it does” field still contains duplicated stale `/verify` and `/pricing` warnings. See [the listing read-back and target copy](docs/mcprush-listing-copy.md).[10]
 
 An unpaid request to a paid route returns an HTTP 402 challenge. A client must independently validate the exact route and amount and obtain authorization before signing; the API does not silently charge a wallet.
 
 ## Current status — do not confuse the data service with a fund
 
-- At `2026-10-14T02:19:27.767Z`, the live [`/verify` response](https://devbox.tail873466.ts.net:10000/verify) returned an empty `live_now.perp_positions` list while its claim field still asserted the operator runs the strategy live. The live `/mcp` tool description also claims "live position tracking."[5][11] The endpoint contradicts itself; do not repeat either live-position claim.
-- The checked-in `aum-ledger.json` is dated `2026-10-13T22:57:21.137Z` and records paused intake, no depositors, and `$0` recorded deposits. The live `/pricing` still advertises legacy fund deposits, so the repository record and API copy conflict. **Do not send funds** to an address found in an old commit or report.
+- At `2026-10-15T13:46:15.370Z`, the live [`/verify` response](https://devbox.tail873466.ts.net:10000/verify) said no open Hyperliquid perp positions were returned and exposed an empty `live_now.perp_positions` list. This is a time-bounded account snapshot, not proof of a carry strategy, trades, or returns.[5]
+- The live `/mcp` `tools/list` describes verdicts as read-only and says operator positions, trades, and returns are not verified.[11] `/pricing` lists data-access tiers and sets `fund_intake.status` to `paused`; `/fund` is status-only and says no investor deposits are accepted.[4][5] The API correction shipped in x402-carry-api PR #3 (`16f8301`). **Do not send funds** to addresses found in older commits or reports.
 - `carry-exec.mjs` is a dry-run planner. Its live order-submission path exits with status 2; it does not place trades.
-- The current API [`/pricing`](https://devbox.tail873466.ts.net:10000/pricing) and `/fund` responses still contain stale fund/deposit copy that conflicts with this status.[4][5] Until those API surfaces are corrected, do not treat their fund section as an open offer or deposit route. The mismatch is documented in [verification boundaries](docs/verification.md).
+- The API's [`/pricing`](https://devbox.tail873466.ts.net:10000/pricing) endpoint sells data access only and explicitly pauses capital intake; `/fund` returns status, not a deposit route.[4][5] The old vault proposal remains withdrawn. See [verification boundaries](docs/verification.md) and [MCPRush's separate listing-copy status](docs/mcprush-listing-copy.md).
 
 ## What this repository can prove
 
