@@ -1,16 +1,16 @@
-# MCPRush listing draft
+# MCPRush listing — current published state
 
-**Marketplace economics:** the live MCPRush listing is already **Free ($0)**, has no plan, and says the publisher-hosted endpoint is outside MCPRush's call path.[10]
+**Marketplace economics:** the published MCPRush listing is **Free ($0)**. Calls go directly to the publisher-hosted endpoint; MCPRush is not in the call path.[10]
 
 The publisher fee is 12% of net marketplace sales; payment-processing fees are separate.[1]
 
 No MCPRush markup is needed on direct x402 calls.[1][10]
 
-**Current listing is stale:** its verdict description costs 5¢, opportunities 25¢, and digest 1¢ per call, and claims "live position tracking."[10]
+**Listing copy updated 2026-10-15:** the public page now distinguishes the free MCPRush listing from paid x402 calls and shows the current route ladder: $0.10 verdicts, $0.50 opportunities, $0.02 digest, plus a free prior-day sample.[10]
 
-The live API charges 10¢, 50¢, and 2¢ in that route order; `/verify` currently returns an empty perp-position list.[4][5]
+The live API reports those route prices. At `2026-10-15T02:26:32.506Z`, `/verify` still asserted a live carry position while returning an empty `perp_positions` list.[4][5]
 
-The live `/mcp` description repeats the tracking claim.[11] Align prices and remove the live-position claim from both surfaces before the next release.
+The live `/mcp` `tools/list` still repeats the position-tracking claim, and `/pricing` still contains legacy fund/deposit language.[4][11] MCPRush's manual tool-list override corrects the marketplace listing only; no backend deployment or route change was made.
 
 ## Price architecture and market anchor
 
@@ -18,13 +18,17 @@ The live API ladder is 2¢ for the latest digest, 10¢ for verdicts, and 50¢ fo
 
 **Pricing decision:** keep the direct x402 ladder unchanged; make MCPRush discovery free. Revisit call prices only after route-level challenge-to-settlement conversion is instrumented. No measured post-change conversion denominator currently supports a price cut or hike.
 
-## Suggested title
+## Current title
 
-Carry Intel — Hyperliquid Funding and Hedgeability Screen
+Carry Intel — Hyperliquid funding-carry intelligence (unchanged)
 
-## Short description
+## Published copy (MCPRush)
 
-Funding rates are public; hedgeability is the work. Carry Intel labels Hyperliquid's default funding floor as baseline, filters for a real liquid spot hedge, and publishes settled prints including negative hours. Read-only market data. No trade execution or open deposit program.
+**Short description:** Read-only Hyperliquid screens. Free MCPRush listing; x402/Solana USDC calls: verdicts $0.10, scan $0.50, digest $0.02; prior-day sample free. Not proof of positions or returns.
+
+**What it does:** Hyperliquid funding-carry intel, per-call via x402 (USDC/Solana). Free sample tool included. Call pricing applies to the publisher endpoint, not MCPRush: carry_verdicts $0.10/call, carry_opportunities $0.50/call, carry_digest $0.02/call via x402 in USDC/Solana; carry_free_sample returns yesterday's digest free. The MCPRush listing is free. Current /verify claims a live position but reports empty perp_positions; this listing does not verify positions, trades, or returns. /pricing still includes legacy fund/deposit terms; this listing makes no deposit or managed-fund offer.
+
+**Published `carry_verdicts` tool description:** Read-only Hyperliquid funding verdicts for tracked markets; /verify currently contradicts its live-position claim, so positions, trades, and returns are not verified. Costs $0.10/call via x402.
 
 ## Price field and tool prices
 
@@ -34,13 +38,11 @@ Funding rates are public; hedgeability is the work. Carry Intel labels Hyperliqu
 - `carry_digest`: **$0.02** per call via direct x402
 - `carry_free_sample`: **Free**, prior-day digest
 
-Before publishing, align the three paid-tool descriptions with the live 402 prices, remove "live position tracking," and reconcile the API `/pricing` and `/fund` copy. MCPRush Studio is currently blocked by its Cloudflare security-verification page, so this draft is not live.
+The listing-copy and marketplace tool-surface updates are live without a release. The listing remains v1.0.1; no v1.0.2 release was created. These marketplace edits do not change direct `/mcp` metadata or `/pricing`. Keep the backend correction blocked until the shared no-deploy/lock constraint is explicitly released; then fix and verify those live routes.
 
 ## Listing copy
 
-Carry Intel is a read-only Hyperliquid funding screen for agents. It separates baseline funding from above-floor signals, checks for a mapped spot market and a minimum 24-hour pair-volume threshold, and exposes settled hourly prints—including negative hours. Raw exchange data is public; the paid layer is the classification and hedgeability filter, not a promise of returns.
-
-Start with the free prior-day digest. **The headline funding rate is not the trade.** Paid calls add a screen for false hedges and expose the negative hours; buyers authorize each paid call. The API does not submit trades, custody user funds, or currently accept vault deposits.
+The current marketplace copy discloses the live x402 route prices, the free prior-day sample, the `/verify` contradiction, and the legacy fund/deposit text still present at `/pricing`. It makes no live-position, trade, return, deposit, or managed-fund claim.
 
 ## Campaign hooks
 
@@ -50,8 +52,8 @@ Start with the free prior-day digest. **The headline funding rate is not the tra
 
 ## Trust and activation checklist
 
-- The page shows no reviews, no published security grade, and "No parameter schema on file."[10] A live `tools/list` probe returns empty-object `inputSchema` values for all four no-argument tools; publish those existing declarations in the listing rather than inventing parameters.[11]
-- Publish a v1.0.2 release note with the price alignment and claim correction. Do not imply a security audit: the listing identifies the server as remote and unscanned.[10]
+- The page still shows no reviews and no security scan. A live `tools/list` probe returns empty-object `inputSchema` values for all four no-argument tools; do not invent parameters.[10][11]
+- No release was created; the listing still reports v1.0.1. Do not imply a security audit: the listing identifies the server as remote and unscanned.[10]
 - Ask independent users for real reviews after they test the free digest. Never seed or fabricate reviews.
 
 ## Sources
