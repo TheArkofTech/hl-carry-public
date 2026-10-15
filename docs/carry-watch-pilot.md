@@ -22,9 +22,9 @@ Method for that snapshot: fetch `metaAndAssetCtxs`, `spotMeta`, and `spotMetaAnd
 
 ## Take part in the demand test
 
-[Email **ops@thearkoftech.com** about the Carry Watch pilot](mailto:ops@thearkoftech.com?subject=Carry%20Watch%20pilot) with: the coin(s) you monitor, the venue where you would hedge, the **approximate** intended notional band, what change would warrant an alert, and whether you would pay **$29/month** once the bounded service is demonstrated. **Do not send wallet keys, API tokens, order details, or funds.** This is an opt-in conversation, not an account sign-up.
+[Open a **public Carry Watch pilot inquiry**](https://github.com/TheArkOfTech/hl-carry-public/issues/new?template=carry-watch-pilot.yml). The form asks for your workflow, a public market name, the change worth an alert, and whether a demonstrated bounded service would be worth **$29/month**. GitHub issues are visible to everyone: **do not post wallet addresses, keys, API tokens, notional, positions, order details, confidential strategy information, or funds.** This is an expression of interest, not an account sign-up or a private procurement channel.
 
-We will measure confirmed operator feedback and willingness to pay separately from free-sample requests. A marketplace install, GitHub clone, MCP `tools/list`, or x402 challenge is not a paying customer. Current funding rates are not realized returns; no positions, trades, or investment results are being represented.
+We will count independent, consented issue responses and explicit willingness to pay separately from free-sample requests. A marketplace install, GitHub clone, MCP `tools/list`, or x402 challenge is not a paying customer. Current funding rates are not realized returns; no positions, trades, or investment results are being represented.
 
 ## Sources
 

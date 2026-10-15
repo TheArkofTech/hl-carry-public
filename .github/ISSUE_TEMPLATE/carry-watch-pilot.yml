@@ -1,0 +1,52 @@
+name: Carry Watch pilot inquiry
+description: Public, contact-only inquiry for a proposed change-alert pilot; no funds or secrets.
+title: "[Carry Watch pilot] "
+labels: []
+body:
+  - type: markdown
+    attributes:
+      value: |
+        This issue is PUBLIC. Carry Watch is an interest test, not a running subscription or investment product. Do not post wallet addresses, keys, API tokens, account details, trade sizes, order details, or private strategy information. No funds or deposits are requested.
+  - type: dropdown
+    id: workflow
+    attributes:
+      label: Your workflow
+      options:
+        - I manually monitor funding and spot availability
+        - I run a read-only monitoring agent
+        - I operate a trading system or research desk
+        - Other
+    validations:
+      required: true
+  - type: input
+    id: venue
+    attributes:
+      label: Venue or market of interest (public names only)
+      placeholder: Hyperliquid HYPE spot/perp
+    validations:
+      required: false
+  - type: textarea
+    id: alert-job
+    attributes:
+      label: What change would be worth an alert?
+      description: Describe the decision, not a private strategy or trade.
+      placeholder: I want to know when an on-venue spot-screened candidate crosses a funding threshold and why.
+    validations:
+      required: true
+  - type: dropdown
+    id: willingness
+    attributes:
+      label: Would a demonstrated, bounded service be worth $29/month to you?
+      options:
+        - Yes, after reviewing a working demonstration
+        - Not sure; I need to see its accuracy and scope
+        - No
+    validations:
+      required: true
+  - type: checkboxes
+    id: safety
+    attributes:
+      label: Public issue acknowledgement
+      options:
+        - label: I understand this issue is public and will not share secrets, wallet information, or confidential trades.
+          required: true
