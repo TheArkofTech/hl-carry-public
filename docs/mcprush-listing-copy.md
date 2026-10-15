@@ -6,11 +6,11 @@ The publisher fee is 12% of net marketplace sales; payment-processing fees are s
 
 No MCPRush markup is needed on direct x402 calls.[1][10]
 
-**Listing copy updated 2026-10-15:** the public page now distinguishes the free MCPRush listing from paid x402 calls and shows the current route ladder: $0.10 verdicts, $0.50 opportunities, $0.02 digest, plus a free prior-day sample.[10]
+**Listing update status 2026-10-15:** the short description and route prices are current. The public “What it does” field is malformed: the new description was appended inside the old description, so stale `/verify` and `/pricing` warnings remain. Do not call the listing synchronized until that field is replaced cleanly and read back.[10]
 
-The live API reports those route prices. At `2026-10-15T02:26:32.506Z`, `/verify` still asserted a live carry position while returning an empty `perp_positions` list.[4][5]
+The live API reports those route prices. At `2026-10-15T13:00:29.949Z`, `/verify` said no open Hyperliquid perp positions were returned and reported zero positions; `/pricing` exposed only API tiers plus paused capital intake, and `/fund` was status-only.[4][5]
 
-The live `/mcp` `tools/list` still repeats the position-tracking claim, and `/pricing` still contains legacy fund/deposit language.[4][11] MCPRush's manual tool-list override corrects the marketplace listing only; no backend deployment or route change was made.
+The live `/mcp` `tools/list` now describes verdicts as read-only and says positions, trades, and returns are not verified.[11] The API correction was deployed and recorded in TheArkofTech/x402-carry-api PR #3, merged as `16f8301`. Independent read-back at `2026-10-15T13:28Z` confirmed the corrected API and marketplace tool description; the marketplace's main description remains a separate, stale surface.[10]
 
 ## Price architecture and market anchor
 
@@ -26,9 +26,9 @@ Carry Intel — Hyperliquid funding-carry intelligence (unchanged)
 
 **Short description:** Read-only Hyperliquid screens. Free MCPRush listing; x402/Solana USDC calls: verdicts $0.10, scan $0.50, digest $0.02; prior-day sample free. Not proof of positions or returns.
 
-**What it does:** Hyperliquid funding-carry intel, per-call via x402 (USDC/Solana). Free sample tool included. Call pricing applies to the publisher endpoint, not MCPRush: carry_verdicts $0.10/call, carry_opportunities $0.50/call, carry_digest $0.02/call via x402 in USDC/Solana; carry_free_sample returns yesterday's digest free. The MCPRush listing is free. Current /verify claims a live position but reports empty perp_positions; this listing does not verify positions, trades, or returns. /pricing still includes legacy fund/deposit terms; this listing makes no deposit or managed-fund offer.
+**Target “What it does” copy (not yet cleanly published):** Hyperliquid funding-carry intel, per-call via x402 (USDC/Solana). Free sample tool included. Call pricing applies to the publisher endpoint, not MCPRush: carry_verdicts $0.10/call, carry_opportunities $0.50/call, carry_digest $0.02/call; carry_free_sample returns yesterday's settled digest free. Read-only funding screens; operator positions, trades, and returns are not verified. No investor deposits or managed-fund offer; capital intake is paused.
 
-**Published `carry_verdicts` tool description:** Read-only Hyperliquid funding verdicts for tracked markets; /verify currently contradicts its live-position claim, so positions, trades, and returns are not verified. Costs $0.10/call via x402.
+**Published MCPRush `carry_verdicts` override (read back 2026-10-15T13:28Z):** Read-only Hyperliquid funding verdicts; operator positions, trades, and returns are unverified. Basis and 24h sample context. Costs $0.10/call via x402. The obsolete `/verify` contradiction clause is no longer in the tool description.[10]
 
 ## Price field and tool prices
 
@@ -38,11 +38,11 @@ Carry Intel — Hyperliquid funding-carry intelligence (unchanged)
 - `carry_digest`: **$0.02** per call via direct x402
 - `carry_free_sample`: **Free**, prior-day digest
 
-The listing-copy and marketplace tool-surface updates are live without a release. The listing remains v1.0.1; no v1.0.2 release was created. These marketplace edits do not change direct `/mcp` metadata or `/pricing`. Keep the backend correction blocked until the shared no-deploy/lock constraint is explicitly released; then fix and verify those live routes.
+Listing-copy and manual tool-surface edits do not require a release; the listing remains v1.0.1. They do not change direct `/mcp` metadata or `/pricing`. The backend correction is live and merged, and the marketplace tool override is corrected. The main marketplace description still requires a clean replacement and public read-back.
 
 ## Listing copy
 
-The current marketplace copy discloses the live x402 route prices, the free prior-day sample, the `/verify` contradiction, and the legacy fund/deposit text still present at `/pricing`. It makes no live-position, trade, return, deposit, or managed-fund claim.
+The public marketplace description currently contains duplicated copy and retains stale warnings about `/verify` and `/pricing`. The short description, price fields, and tool override are current. Replace the main description cleanly, then read it back before treating distribution as synchronized. Do not mistake a corrected tool override for a corrected rich-text description.
 
 ## Campaign hooks
 
