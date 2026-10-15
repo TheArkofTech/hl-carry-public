@@ -1,0 +1,33 @@
+name: Carry Intel commercial contact
+description: Public, contact-only inquiry for credit-key or enterprise evaluation; no invoices or funds are accepted here.
+title: "[Commercial inquiry] "
+labels: []
+body:
+  - type: markdown
+    attributes:
+      value: |
+        This is a PUBLIC issue, not a private procurement channel or invoice. Do not post account details, wallet addresses, API tokens, payment information, trade sizes, positions, orders, or confidential strategy details. No funds or deposits are requested. Private onboarding requires a separately verified channel.
+  - type: dropdown
+    id: route
+    attributes:
+      label: Which product are you evaluating?
+      options:
+        - Credit-key API access
+        - Enterprise archive or SLA
+        - Other
+    validations:
+      required: true
+  - type: textarea
+    id: job
+    attributes:
+      label: What public-safe problem would this solve for you?
+      placeholder: Our research system needs a dated, spot-screened funding signal.
+    validations:
+      required: true
+  - type: checkboxes
+    id: safety
+    attributes:
+      label: Public issue acknowledgement
+      options:
+        - label: I understand that this issue is public and will not include confidential or payment details.
+          required: true

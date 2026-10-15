@@ -10,6 +10,8 @@ The product is the filter and the audit trail, not the raw funding rate. **Fundi
 
 **Would you pay for change-only alerts instead of repeatedly polling?** [Carry Watch founding-pilot interest test](docs/carry-watch-pilot.md) states the proposed scope and test price. It is **not** an active subscription; no money, keys, or deposits are requested.
 
+For credit-key or enterprise evaluation, [open a public, contact-only commercial inquiry](https://github.com/TheArkOfTech/hl-carry-public/issues/new?template=commercial-contact.yml). Do not include confidential information or payment details; private onboarding requires a separately verified channel.
+
 ## Current product and pricing
 
 | Tool | Current price | What it returns |
