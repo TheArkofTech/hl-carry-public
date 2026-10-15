@@ -4,15 +4,17 @@
 
 Carry Intel is a **read-only market-data service** for agents screening Hyperliquid funding. It separates the protocol's default funding floor from above-floor observations, checks for a matching spot market and a minimum 24-hour pair-volume threshold, and exposes settled funding prints—including negative hours.
 
-**Try the data first:** [open the free prior-day settled-funding digest](https://devbox.tail873466.ts.net:10000/carry/digest/free?src=github) (no wallet, sign-in, or payment). Agents can instead call `carry_free_sample` on the remote MCP server. Check the dated negative prints and limitations before choosing the fresh $0.02 digest, $0.10 verdicts, or $0.50 spot-screened opportunity scan. The free sample is not a position, trade, or return report.
+**Try the data first:** [open a free, older dated settled-funding digest](https://devbox.tail873466.ts.net:10000/carry/digest/free?src=github) (no wallet, sign-in, or payment). It serves the previous published report, which need not be yesterday's calendar date; read the date in the response. Agents can instead call `carry_free_sample` on the remote MCP server. Check the dated negative prints and limitations before choosing the latest $0.02 digest, $0.10 verdicts, or $0.50 spot-screened opportunity scan. The free sample is not a position, trade, or return report.
 
 The product is the filter and the audit trail, not the raw funding rate. **Funding rates are not returns.** An annualized funding quote is not realized portfolio P&L; a spot/perp pair is not risk-free, and this screen does not model execution depth, fees, slippage, borrow, liquidation, or venue risk.
+
+**Would you pay for change-only alerts instead of repeatedly polling?** [Carry Watch founding-pilot interest test](docs/carry-watch-pilot.md) states the proposed scope and test price. It is **not** an active subscription; no money, keys, or deposits are requested.
 
 ## Current product and pricing
 
 | Tool | Current price | What it returns |
 |---|---:|---|
-| `carry_free_sample` | Free | Prior-day digest |
+| `carry_free_sample` | Free | Previous published digest (dated; not necessarily yesterday) |
 | `carry_digest` | $0.02/call | Latest digest |
 | `carry_verdicts` | $0.10/call | Funding classifications and available basis observations |
 | `carry_opportunities` | $0.50/call | Full-universe candidate scan with spot-market and volume screening |
