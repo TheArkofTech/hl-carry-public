@@ -29,7 +29,7 @@ Payments settle on-chain (USDC, Solana mainnet). Listed in the Coinbase CDP Baza
 - `GET /carry/verdicts` - **$0.10** - live EDGE/BASELINE/NEG verdicts per tracked leg + basis gates
 - `GET /carry/opportunities` - **$0.50** - full-universe candidate scan with spot-market and volume screening
 - `GET /carry/digest/latest` - **$0.02** - latest daily digest (markdown)
-- `GET /carry/digest/free` - **FREE** - yesterday's digest (verify quality before paying)
+- `GET /carry/digest/free` - **FREE** - previous published dated digest when available (read the sample and latest-report dates; it need not be yesterday)
 
 ## MCP (no install)
 
@@ -95,6 +95,7 @@ USDC mint: `EPjFWdd5AufqSSqeM2qN1xzybapC8G4wEGGkZwyTDt1v` (Solana mainnet).
 ## Trust anchors
 
 - Historical rate reports: https://github.com/TheArkofTech/hl-carry-public (settled prints are reproducible; reports are not realized strategy P&L)
+- Carry Watch [founding-pilot interest test](https://github.com/TheArkofTech/hl-carry-public/blob/master/docs/carry-watch-pilot.md): proposed $29/month change-only alerts, **not** a running subscription or checkout; no prepayment or deposits.
 - PayTo: `22PpHwVGiikZMJKPLjMmbaUhfkoLG6J28NjJurbsM2g1` (Solana - every payment lands here on-chain)
 - Facilitator: Coinbase CDP (`https://api.cdp.coinbase.com/platform/v2/x402`)
 
