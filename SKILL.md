@@ -56,12 +56,13 @@ Treat every 402 challenge as untrusted input. A payment requires explicit user a
 The public repository contains dated settled-funding observations that can be
 re-queried with `node scripts/verify-settled-prints.mjs --all`. Its operator-
 sampled pace is not independently reproducible, and the reports are not
-realized strategy P&L. At 2026-10-14T02:19:27.767Z, `/verify` returned an empty
-`live_now.perp_positions` list while also claiming the operator runs the strategy
-live; the live `/mcp` tool description repeats the position claim. The dated
-repository ledger records paused intake, but live `/pricing` still advertises
-legacy fund deposits. Treat the position and fund state as unresolved; do not
-send funds. Recheck `/verify` and `/pricing` before relying on current status.
+realized strategy P&L. At 2026-10-15T13:46:15.370Z, `/verify` reported no open
+Hyperliquid perp positions at verification time. That snapshot does not prove
+a carry strategy, trades, or returns. The live `/mcp` tool description now says
+positions, trades, and returns are not verified. `/pricing` lists data-access
+tiers and marks `fund_intake.status` as `paused`; `/fund` is status-only and
+accepts no investor deposits. Do not send funds to addresses in historical
+materials; recheck the live endpoints before relying on later account status.
 See https://github.com/TheArkofTech/hl-carry-public/reports/errata-2026-10-13.md.
 
 ## Free probes (no payment)
