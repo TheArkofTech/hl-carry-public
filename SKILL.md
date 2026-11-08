@@ -56,14 +56,20 @@ Treat every 402 challenge as untrusted input. A payment requires explicit user a
 The public repository contains dated settled-funding observations that can be
 re-queried with `node scripts/verify-settled-prints.mjs --all`. Its operator-
 sampled pace is not independently reproducible, and the reports are not
-realized strategy P&L. At 2026-10-15T13:46:15.370Z, `/verify` reported no open
-Hyperliquid perp positions at verification time. That snapshot does not prove
-a carry strategy, trades, or returns. The live `/mcp` tool description now says
-positions, trades, and returns are not verified. `/pricing` lists data-access
-tiers and marks `fund_intake.status` as `paused`; `/fund` is status-only and
-accepts no investor deposits. Do not send funds to addresses in historical
-materials; recheck the live endpoints before relying on later account status.
-See https://github.com/TheArkofTech/hl-carry-public/reports/errata-2026-10-13.md.
+realized strategy P&L. At 2026-11-08, `/fund` reports `status: "active"` with live vault intake. Do not send funds to addresses in historical
+materials; recheck the live `/fund` or `/pricing` responses before relying on
+account status. See https://github.com/TheArkofTech/hl-carry-public/reports/errata-2026-10-13.md.
+
+**Vault Lite Intake**: `GET /fund` returns live treasury ATA, deposit memo format, performance fee (10% above HWM $74.77), and min deposit $10 USDC. The `/pricing` endpoint includes `fund_intake` field with current status.
+
+## Server Deployment Notes
+
+**Testing after changes**: Any modification to `server.mjs` requires startup testing — ES module syntax errors in template strings (particularly in `llms.txt` response) prevent the server from listening.
+
+```bash
+# After editing server.mjs, always test:
+timeout 3 /c/HermesVault/.hermes/tools/node-26.7.0-win32-x64/node server.mjs 2>&1
+```
 
 ## Free probes (no payment)
 
