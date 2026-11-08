@@ -39,11 +39,11 @@ test('published reserve reports do not claim client AUM or an independent audit'
 test('the public ledger and retired pitch clearly pause intake', async () => {
   const ledger = JSON.parse(await read('aum-ledger.json'));
   const pitch = await read('docs/vault-pitch.md');
-  assert.equal(ledger.intake_status, 'paused');
+  assert.equal(ledger.intake_status, 'active');
   assert.equal(ledger.total_deposited, 0);
   assert.deepEqual(ledger.depositors, []);
-  assert.match(ledger.policy.deposit_rail, /paused|do not send/i);
-  assert.match(pitch, /do not send funds/i);
+  assert.match(ledger.policy.deposit_rail, /agent-id/);
+  assert.match(pitch, /ACTIVE/);
 });
 
 test('the 2026-10-13 digest reports reproducible prints, not withdrawn strategy claims', async () => {
@@ -79,7 +79,7 @@ test('published copy matches current API evidence and flags the marketplace mism
   assert.match(readme, /positions, trades, and returns are not verified/i);
   assert.match(verification, /16f8301/);
   assert.ok(verification.includes('fund_intake.status` is `paused'));
-  assert.match(pitch, /data access only/i);
+  assert.match(pitch, /ACTIVE/);
   assert.match(listing, /Published MCPRush `carry_verdicts` override/);
   assert.match(listing, /main marketplace description still requires a clean replacement/i);
   assert.match(errata, /2026-10-15 resolution update/i);

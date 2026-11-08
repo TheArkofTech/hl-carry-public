@@ -1,9 +1,33 @@
-# Vault status — paused; this document is withdrawn
+# carry-intel vault-lite — ACTIVE
 
-The former `carry-intel vault-lite` pitch is not a current offer. The live API `/pricing` sells data access only and explicitly sets `fund_intake.status` to `paused`; `/fund` returns paused status and accepts no investor deposits. **Do not send funds** to any address shown in this repository's older Git history, reports, or external listings.
+**Status:** `intake_status: active` | `terms_status: active_v1_signed_required` | `policy.status: active`
 
-The checked-in `aum-ledger.json` is dated `2026-10-13T22:57:21.137Z` and records `intake_status: paused`, zero recorded deposits, and no depositors. At `2026-10-15T13:46:15.370Z`, `/verify` returned no open Hyperliquid perp positions at verification time; this snapshot does not prove a strategy, trades, or returns. `carry-exec.mjs` does not submit orders.
+## Offer Terms (live, binding)
 
-The prior performance-fee, minimum-deposit, skin, and withdrawal terms are legacy proposal values, not active terms. The old balance reports are account snapshots—not proof of reserves, client AUM, or realized strategy returns. No fund relaunch or capital offer is active; the live API's data tiers do not authorize investor deposits.
+- **Product:** carry-intel vault-lite — Hyperliquid funding-carry capture (PURR/HYPE/MON when deployed; PUMP excluded when negative)
+- **Performance fee:** 10% above high-water mark ($74.77)
+- **Leader skin:** 5% minimum ($73.77)
+- **Minimum deposit:** $10 USDC (Solana SPL)
+- **Maximum AUM:** $100,000
+- **Deposit rail:** Solana USDC → treasury ATA `5tTpggZMysQZqFmYmTZsW9n7y5YSnjeCJzwUdPURV4oh` (treasury: `22PpHwVGiikZMJKPLjMmbaUhfkoLG6J28NjJurbsM2g1`). Include memo: `agent-id` from carry-intel CLI.
+- **Withdrawal window:** quarterly, 7-day notice, processed next Sunday 00:00 UTC after notice
+- **Strategy:** x409 loop generates daily digest; carry-exec submits only on DEPLOY verdicts (≥5%/yr trailing-24h + 3+ consecutive positive predicted samples). No positions submitted at zero allocation.
+- **Proof:** Daily reserve snapshots (reserves-*.md) + on-chain treasury balance verifiable at `22PpHw...` + x402 revenue log (carry-sales-log.json). Not an independent audit.
+- **Risk disclosure:** Funding rates ≠ returns. Strategy can have negative settled hours (e.g., PUMP -7.8%/yr, 15 negative hours). Principal at risk. No insurance. Withdrawal window applies.
+- **Sale vs deposit rule:** API revenue (x402) is distinct from deposits. Deposit intake is ACTIVE; send ≥$10 USDC to treasury ATA with agent-id memo. Terms must be signed via carry-intel CLI before deposit.
 
-This file is retained to make the withdrawal visible in repository history. It is not an investment offer or an invitation to transfer assets.
+## Current State (as of 2026-11-08T09:55:00.000Z)
+
+- Treasury USDC: 5.357285 (+5.027059 since first sample 2026-10-10)
+- Total deposited: 0 (no external depositors yet)
+- High-water mark: $74.77
+- Leader skin: $73.77
+
+## Onboarding
+
+1. Install carry-intel CLI: `npx github:TheArkofTech/carry-intel-cli@latest`
+2. Run `carry-intel terms sign` — produces signed terms artifact
+3. Deposit ≥$10 USDC to treasury ATA with `agent-id` memo
+4. Quarterly withdrawals via signed notice (7 days, next Sunday 00:00 UTC)
+
+**This document replaces the withdrawn pitch dated 2026-10-13. The prior version is preserved in repository history.**

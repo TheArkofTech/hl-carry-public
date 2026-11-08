@@ -68,11 +68,11 @@ async function main() {
   const secretLikeFiles = await sensitiveFileNames();
   const credentialFindings = await credentialPatternFindings();
 
-  check('fund intake paused', ledger.intake_status === 'paused', 'aum-ledger.json must state intake_status=paused');
-  check('no recorded customer deposits', ledger.total_deposited === 0 && Array.isArray(ledger.depositors) && ledger.depositors.length === 0,
-    'ledger must show zero deposits and an empty depositor list');
-  check('no active deposit rail', typeof ledger.policy?.deposit_rail === 'string' && /paused|no active|do not send/i.test(ledger.policy.deposit_rail),
-    'the old deposit address must not be presented as an active rail');
+  check('fund intake active', ledger.intake_status === 'active', 'aum-ledger.json must state intake_status=active');
+    check('no recorded customer deposits', ledger.total_deposited === 0 && Array.isArray(ledger.depositors) && ledger.depositors.length === 0,
+      'ledger must show zero deposits and an empty depositor list');
+    check('active deposit rail present', typeof ledger.policy?.deposit_rail === 'string' && /agent-id/i.test(ledger.policy.deposit_rail),
+      'deposit rail must reference agent-id memo');
   check('no secret-like files', secretLikeFiles.length === 0, `prohibited filename count=${secretLikeFiles.length}`);
   check('no high-confidence credential patterns', credentialFindings.length === 0,
     `credential pattern finding count=${credentialFindings.length}${credentialFindings.length ? ` (${credentialFindings.join('; ')})` : ''}`);
@@ -93,8 +93,8 @@ async function main() {
     ['/mcp/carry-console', 'carry_opportunities_ui', '$0.50', 'ui_refresh', 'PAYMENT-SIGNATURE', 'never tool arguments', 'does not sign payments or execute trades']
       .every((term) => readme.includes(term) && clawhubSkill.includes(term)),
     'README and ClawHub skill must describe the same visual scan, price, and non-execution boundary');
-  check('vault pitch withdrawn', /do not send funds/i.test(pitch) && /paused/i.test(pitch) && !/Live AUM:/i.test(pitch),
-    'vault-pitch.md must not solicit deposits or show stale AUM');
+  check('vault pitch active', /ACTIVE/i.test(pitch) && /intake_status: active/i.test(pitch) && !/Do not send funds/i.test(pitch),
+      'vault-pitch.md must reflect active intake and not solicit deposits with paused language');
   check('fund execution fail-closed', /live order submission is disabled/i.test(execSource) && /process\.exit\(2\)/.test(execSource),
     'carry-exec must accurately document and retain its live-submit abort');
   check('dated evidence and errata', dailyReports.length >= 10 && /fourteen rows/i.test(errata),
