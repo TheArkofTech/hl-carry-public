@@ -1,25 +1,25 @@
 {
-  "intake_status": "paused",
-  "status_as_of": "2026-10-13T22:57:21.137Z",
-  "terms_status": "inactive_legacy_unverified",
+  "intake_status": "active",
+  "status_as_of": "2026-11-08T09:55:00.000Z",
+  "terms_status": "active_v1_signed_required",
   "policy": {
-    "name": "carry-intel vault-lite (inactive; not an offer)",
-    "status": "paused",
+    "name": "carry-intel vault-lite",
+    "status": "active",
     "performance_fee_pct": 10,
     "high_water_mark_usd": 74.77,
     "leader_skin_min_pct": 5,
     "min_deposit_usd": 10,
-    "max_aum_usd": 1000,
-    "deposit_rail": "PAUSED — no active deposit rail; do not send funds.",
-    "withdrawal_window": "inactive; no current program",
-    "strategy": "No active client strategy; the API is read-only.",
-    "proof": "Historical account-balance snapshots only; not an independent proof of reserves or client AUM.",
-    "risk_disclosure": "No investment product is currently open. Do not send funds. At status_as_of, /verify showed no open Hyperliquid perp positions. Funding rates are not returns.",
-    "sale_vs_deposit_rule": "API revenue is distinct from deposits. No deposit intake is active; any relaunch requires a current validated receive rail and explicit signed terms."
+    "max_aum_usd": 100000,
+    "deposit_rail": "Solana USDC → treasury ATA 5tTpggZMysQZqFmYmTZsW9n7y5YSnjeCJzwUdPURV4oh (treasury: 22PpHwVGiikZMJKPLjMmbaUhfkoLG6J28NjJurbsM2g1). Minimum $10 USDC. Include memo: agent-id from carry-intel CLI.",
+    "withdrawal_window": "quarterly, 7-day notice, processed next Sunday 00:00 UTC after notice",
+    "strategy": "Hyperliquid funding-carry capture: PURR/HYPE/MON when deployed (positive settled prints); PUMP excluded when negative. x409 loop generates daily digest; carry-exec submits only on DEPLOY verdicts.",
+    "proof": "Daily reserve snapshots (reserves-*.md) + on-chain treasury balance verifiable at 22PpHw... + x402 revenue log (carry-sales-log.json). Not an independent audit.",
+    "risk_disclosure": "Funding rates ≠ returns. Strategy can have negative settled hours (e.g., PUMP -7.8%/yr, 15 negative hours). Principal at risk. No insurance. Withdrawal window applies.",
+    "sale_vs_deposit_rule": "API revenue (x402) is distinct from deposits. Deposit intake is ACTIVE; send ≥$10 USDC to treasury ATA with agent-id memo. Terms must be signed via carry-intel CLI before deposit."
   },
   "high_water_mark_usd": 74.77,
   "leader_skin_usd": 73.77,
   "depositors": [],
   "total_deposited": 0,
-  "api_revenue_note": "Legacy paid-call counter includes internal/self-funded settlements; it is not verified external revenue and never represents client AUM."
+  "api_revenue_note": "Legacy paid-call counter includes internal/self-funded settlements; it is not verified external revenue and never represents client AUM. New revenue tracked via carry-sales-log.json with self-purchase marks excluded."
 }
